@@ -43,10 +43,19 @@
     a.appendChild(el('span', 'play', 'PLAY'));
     li.appendChild(a);
 
-    // Top 3 panel. entries stays empty until the leaderboard (project M4) hands scores over.
-    var rows = L.slotsFor([]);
+    // Top 3 panel: blank until the leaderboard answers (see loadTop).
     var panel = el('div', 'top3');
+    panel.setAttribute('data-game', g.id);
     panel.appendChild(el('h2', null, 'TOP 3'));
+    li.appendChild(panel);
+    drawTop(panel, [], LB && LB.endpoint() ? 'loading' : 'off');
+    return li;
+  }
+
+  function drawTop(panel, entries, status) {
+    var rows = L.slotsFor(entries);
+    var old = panel.querySelectorAll('ol, .soon');
+    for (var i = 0; i < old.length; i++) panel.removeChild(old[i]);
     var ol = el('ol');
     rows.forEach(function (row) {
       var item = el('li', row.empty ? 'empty' : '');
@@ -56,17 +65,35 @@
       ol.appendChild(item);
     });
     panel.appendChild(ol);
-    if (L.allEmpty(rows)) panel.appendChild(el('p', 'soon', 'LEADERBOARD SOON'));
-    li.appendChild(panel);
-    return li;
+    var note = L.panelNote(status, rows);
+    if (note) panel.appendChild(el('p', 'soon', note));
   }
 
+  var LB = window.Leaderboard;
   GAMES.forEach(function (g) { floor.appendChild(cabinet(g)); });
 
-  // Coming back from a game tab: refresh the saved bests.
+  // Everyone's top 3 per game, in one request. At most every 20 seconds (the server reuses a copy for a minute anyway).
+  var lastLoad = 0;
+  function loadTop() {
+    if (!LB || !LB.endpoint() || Date.now() - lastLoad < 20000) return;
+    lastLoad = Date.now();
+    LB.fetchAll(L.SLOT_COUNT, function (err, boards) {
+      var panels = floor.querySelectorAll('.top3');
+      for (var i = 0; i < panels.length; i++) {
+        var id = panels[i].getAttribute('data-game');
+        drawTop(panels[i], err ? [] : (boards[id] || []), err ? 'error' : 'ok');
+      }
+    });
+  }
+  loadTop();
+  var foot = document.getElementById('foot-note');
+  if (foot && LB && LB.endpoint()) foot.textContent = 'YOUR BEST stays on this device. TOP 3 is everyone who plays.';
+
+  // Coming back from a game tab: refresh the saved bests and the Top 3.
   function refresh() {
     var bests = floor.querySelectorAll('.best b');
     GAMES.forEach(function (g, i) { if (bests[i]) bests[i].textContent = L.bestLabel(L.readBest(store(), g.bestKey)); });
+    loadTop();
   }
   document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
   window.addEventListener('focus', refresh);

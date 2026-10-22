@@ -108,6 +108,27 @@ h1 { margin: 0; font-size: 13px; color: var(--blue-light); line-height: 1.4; fon
 .bags svg { width: 20px; height: 25px; shape-rendering: crispEdges; }
 .bags .more { align-self: center; font-size: 9px; color: var(--cream); }
 
+/* Leaderboard on the score card (leaderboard.js) */
+.lb { background: var(--ink); border: 2px solid var(--blue); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.lb[hidden] { display: none; }
+.lb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.lb-list li { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 6px; font-size: 8px; color: var(--cream); text-align: left; padding: 1px 4px; }
+.lb-list li.empty { color: #5f7686; }
+.lb-list li.you { background: var(--gold); color: var(--ink); }
+.lb-list .s { text-align: right; }
+.lb-msg { font-size: 8px; color: var(--gold); min-height: 1em; }
+.lb-msg:empty { display: none; }
+.lb-form { display: flex; gap: 8px; align-items: stretch; margin-bottom: 6px; }
+.lb-form label { flex: 1; display: flex; flex-direction: column; gap: 4px; font-size: 7px; color: var(--blue-light); text-align: left; }
+/* 18px stops iPhones from zooming the page when the box is tapped */
+.lb-input {
+  font: inherit; font-size: 18px; letter-spacing: 6px; text-transform: uppercase; text-align: center;
+  color: var(--cream); background: var(--wall); border: 2px solid var(--gold); padding: 8px 4px; width: 100%; border-radius: 0;
+}
+.lb-input:focus { outline: 2px solid var(--cream); outline-offset: 1px; }
+.lb-save { width: auto; font-size: 11px; padding: 10px 14px; align-self: flex-end; }
+.lb-save:disabled { background: #566b78; box-shadow: 0 5px 0 #34434d; color: #1c2a33; cursor: default; }
+
 @media (prefers-reduced-motion: reduce) {
   .banner { transition: none; }
 }

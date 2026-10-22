@@ -268,7 +268,8 @@
     el.rStats.textContent = roasted + (roasted === 1 ? ' batch' : ' batches') + ' roasted · ' + perfects + ' perfect';
     el.again.disabled = true;
     el.over.hidden = false;
-    setTimeout(function () { el.again.disabled = false; el.again.focus(); }, 500); // stops a stray tap from skipping the card
+    if (window.Leaderboard) Leaderboard.show({ game: 'roast2', score: points, mount: document.getElementById('lb') });
+    setTimeout(function () { el.again.disabled = false; if (!(window.Leaderboard && Leaderboard.typing())) el.again.focus(); }, 500); // stops a stray tap from skipping the card
     say('Shift over. Overall score ' + points + '. ' + el.rStats.textContent + '.');
   }
 

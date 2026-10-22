@@ -24,8 +24,8 @@
 
   function bestLabel(n) { return n > 0 ? formatScore(n) : '--'; }
 
-  // The Top 3 panel's rows. entries is what the leaderboard will hand over later:
-  // [{ tag, score }, ...] already ranked. Today it is empty, so every row shows as a blank slot.
+  // The Top 3 panel's rows. entries is what the leaderboard hands over: [{ tag, score }, ...] already
+  // ranked. Missing entries show as blank slots.
   function slotsFor(entries) {
     var list = Array.isArray(entries) ? entries : [];
     var rows = [];
@@ -42,11 +42,19 @@
     return rows;
   }
 
-  // True when no slot holds a real entry, so the panel can say "LEADERBOARD SOON".
+  // True when no slot holds a real entry.
   function allEmpty(rows) { return rows.every(function (r) { return r.empty; }); }
+
+  // The small line under a Top 3 panel. status: 'off' (no server address yet), 'loading', 'ok', 'error'.
+  function panelNote(status, rows) {
+    if (status === 'off') return 'LEADERBOARD SOON';
+    if (status === 'error') return 'LEADERBOARD OFFLINE';
+    if (status === 'ok' && allEmpty(rows)) return 'BE THE FIRST!';
+    return '';
+  }
 
   return {
     SLOT_COUNT: SLOT_COUNT, readBest: readBest, formatScore: formatScore, bestLabel: bestLabel,
-    slotsFor: slotsFor, allEmpty: allEmpty
+    slotsFor: slotsFor, allEmpty: allEmpty, panelNote: panelNote
   };
 });
