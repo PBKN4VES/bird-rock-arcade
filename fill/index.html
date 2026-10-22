@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Fill Master 3000 | Bird Rock Coffee Roasters</title>
+  <meta name="description" content="Fill Bird Rock coffee bags as the conveyor belt speeds up. Hold to pour, let go at 10 oz.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+    <header class="top">
+      <h1>Fill Master 3000</h1>
+      <button id="sound" type="button" aria-pressed="true">Sound: on</button>
+    </header>
+
+    <section class="hud" aria-label="Score">
+      <div><span>Bags</span><b id="bagcount">0</b></div>
+      <div><span>Score</span><b id="points">0</b></div>
+      <div><span>Best</span><b id="best">0</b></div>
+    </section>
+
+    <section class="target">
+      <div class="label">Now filling</div>
+      <div id="coffee" class="coffee">Fill Master 3000</div>
+      <div id="notes" class="notes"></div>
+      <div class="strike-row">
+        <span class="label">Strikes</span>
+        <span id="strikes" class="strikes" aria-label="0 of 3 strikes"><i></i><i></i><i></i></span>
+      </div>
+    </section>
+
+    <div class="stage">
+      <canvas id="c" width="320" height="256" aria-label="Conveyor belt carrying coffee bags past a fill machine, with a weight gauge"></canvas>
+      <div id="banner" class="banner" aria-hidden="true"></div>
+    </div>
+
+    <button id="pour" class="drop" type="button" disabled>Hold to pour</button>
+    <p class="hint">Hold the button, mouse, or Space. Let go at 10 oz.</p>
+    <p id="status" class="sr-only" aria-live="polite"></p>
+  </main>
+
+  <!-- Title screen -->
+  <div id="title" class="overlay" role="dialog" aria-labelledby="title-h">
+    <div class="card">
+      <img class="van" src="../assets/Van_Blue.png" alt="Bird Rock van" width="120" height="120">
+      <h2 id="title-h">Fill Master 3000</h2>
+      <p>Bags of Bird Rock coffee ride the belt past the filler. When a bag is under the spout, hold to pour and let go at exactly 10 oz.</p>
+      <p>Too light, too full, a spill, or a missed bag is a strike. Three strikes and your shift is over. The belt only gets faster.</p>
+      <button id="start" class="btn" type="button">Start shift</button>
+    </div>
+  </div>
+
+  <!-- Review card (game over) -->
+  <div id="over" class="overlay" role="dialog" aria-labelledby="over-h" hidden>
+    <div class="card review">
+      <p class="eyebrow">Overall Score</p>
+      <h2 id="over-h" class="sr-only">Game over: your overall score</h2>
+      <p id="new-best" class="new-best" hidden>New best!</p>
+      <div class="score"><span id="score">0</span></div>
+      <p id="review-stats" class="review-stats"></p>
+      <div id="review-bags" class="bags" aria-label="Bags of coffee filled"></div>
+      <p id="review-key" class="review-stats">Gold label = perfect</p>
+      <div id="review-last" class="review-last">
+        <p class="eyebrow">Last coffee bagged</p>
+        <p id="review-coffee" class="review-coffee"></p>
+        <p id="review-notes" class="review-notes"></p>
+      </div>
+      <button id="again" class="btn" type="button">Fill again</button>
+    </div>
+  </div>
+
+  <script src="../coffees.js"></script>
+  <script src="logic.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

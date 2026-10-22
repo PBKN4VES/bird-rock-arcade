@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pour-Over Power Hour | Bird Rock Coffee Roasters</title>
+  <meta name="description" content="Run a pour-over bar. Slide the kettle along the Kalita 185 drippers and give every drink its three pours on time.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+    <header class="top">
+      <h1>Pour-Over Power Hour</h1>
+      <button id="sound" type="button" aria-pressed="true">Sound: on</button>
+    </header>
+
+    <section class="hud" aria-label="Score">
+      <div><span>Level</span><b id="level">1</b></div>
+      <div><span>Drinks</span><b id="served">0</b></div>
+      <div><span>Score</span><b id="points">0</b></div>
+      <div><span>Best</span><b id="best">0</b></div>
+    </section>
+
+    <section class="target">
+      <div id="label" class="label">Next order</div>
+      <div id="coffee" class="coffee">Pour-Over Power Hour</div>
+      <div id="notes" class="notes"></div>
+      <div class="strike-row">
+        <span class="label">Strikes</span>
+        <span id="strikes" class="strikes" aria-label="0 of 3 strikes"><i></i><i></i><i></i></span>
+      </div>
+    </section>
+
+    <div class="stage">
+      <canvas id="c" width="368" height="256" aria-label="A water tap and a row of Kalita 185 pour-over drippers with a kettle above them, order tickets and a water gauge along the top"></canvas>
+      <div id="banner" class="banner" aria-hidden="true"></div>
+    </div>
+
+    <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <symbol id="i-left" viewBox="0 0 12 12"><polygon points="10,1 10,11 2,6"/></symbol>
+      <symbol id="i-right" viewBox="0 0 12 12"><polygon points="2,1 2,11 10,6"/></symbol>
+      <symbol id="i-down" viewBox="0 0 12 12"><polygon points="6,11 1,5 4,5 4,1 8,1 8,5 11,5"/></symbol>
+      <symbol id="i-drop" viewBox="0 0 12 12"><polygon points="6,0 10,6 11,8 10,10 8,11 4,11 2,10 1,8 2,6"/></symbol>
+    </svg>
+    <div class="pad" aria-label="Controls">
+      <button id="left" class="pad-btn" type="button" aria-label="Move kettle left" disabled>
+        <span class="face"><svg class="ic"><use href="#i-left"/></svg>Left</span>
+        <span class="keys"><kbd><svg class="ic"><use href="#i-left"/></svg></kbd><kbd>A</kbd></span>
+      </button>
+      <button id="right" class="pad-btn" type="button" aria-label="Move kettle right" disabled>
+        <span class="face">Right<svg class="ic"><use href="#i-right"/></svg></span>
+        <span class="keys"><kbd><svg class="ic"><use href="#i-right"/></svg></kbd><kbd>D</kbd></span>
+      </button>
+      <button id="load" class="pad-btn load" type="button" aria-label="Load the dripper under the kettle" disabled>
+        <span class="face"><svg class="ic"><use href="#i-down"/></svg>Load</span>
+        <span class="keys"><kbd><svg class="ic"><use href="#i-down"/></svg></kbd><kbd>S</kbd></span>
+      </button>
+      <button id="pour" class="drop" type="button" aria-label="Pour water" disabled>
+        <span class="face"><svg class="ic"><use href="#i-drop"/></svg>Pour</span>
+        <span class="keys"><kbd class="wide">SPACE</kbd></span>
+      </button>
+    </div>
+    <p class="hint">Load needs an order ticket. Pour when a dripper blinks. Refill at the tap.</p>
+    <p id="status" class="sr-only" aria-live="polite"></p>
+  </main>
+
+  <!-- Title screen -->
+  <div id="title" class="overlay" role="dialog" aria-labelledby="title-h">
+    <div class="card">
+      <img class="van" src="../assets/Van_Blue.png" alt="Bird Rock van" width="120" height="120">
+      <h2 id="title-h">Pour-Over Power Hour</h2>
+      <p>Orders pile up along the top. Move the kettle over an empty Kalita 185, load it, then pour. Each drink needs three pours.</p>
+      <p>Light roasts wait longest between pours, dark roasts the least. The kettle holds 9 pours, so visit the tap on the left to refill.</p>
+      <div class="legend" aria-label="Keyboard controls">
+        <div><span class="keys"><kbd><svg class="ic"><use href="#i-left"/></svg></kbd><kbd><svg class="ic"><use href="#i-right"/></svg></kbd><i>or</i><kbd>A</kbd><kbd>D</kbd></span><span>Move kettle</span></div>
+        <div><span class="keys"><kbd><svg class="ic"><use href="#i-down"/></svg></kbd><i>or</i><kbd>S</kbd></span><span>Load / fill at tap</span></div>
+        <div><span class="keys"><kbd class="wide">SPACE</kbd></span><span>Pour water</span></div>
+      </div>
+      <p>When a dripper blinks yellow, then red, get there and pour before time runs out. Three strikes and your shift is over.</p>
+      <button id="start" class="btn" type="button">Start shift</button>
+    </div>
+  </div>
+
+  <!-- Review card (game over) -->
+  <div id="over" class="overlay" role="dialog" aria-labelledby="over-h" hidden>
+    <div class="card review">
+      <p class="eyebrow">Overall Score</p>
+      <h2 id="over-h" class="sr-only">Game over: your overall score</h2>
+      <p id="new-best" class="new-best" hidden>New best!</p>
+      <div class="score"><span id="score">0</span></div>
+      <p id="review-stats" class="review-stats"></p>
+      <div id="review-cups" class="bags" aria-label="Pour overs served"></div>
+      <div id="review-last" class="review-last">
+        <p class="eyebrow">Last coffee brewed</p>
+        <p id="review-coffee" class="review-coffee"></p>
+        <p id="review-notes" class="review-notes"></p>
+      </div>
+      <button id="again" class="btn" type="button">Brew again</button>
+    </div>
+  </div>
+
+  <script src="../coffees.js"></script>
+  <script src="logic.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

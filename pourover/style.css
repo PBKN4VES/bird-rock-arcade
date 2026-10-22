@@ -1,0 +1,71 @@
+/* Pour-Over Power Hour: only what differs from ../style.css (colors, font and cards come from there). */
+
+.hud { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.hud div { padding: 4px 4px; }
+.hud b { font-size: 12px; }
+
+.target { min-height: 0; }
+.target .label { font-size: 8px; color: var(--blue-light); }
+.target .coffee { margin-top: 2px; color: var(--gold); }
+.target .notes { margin-top: 4px; min-height: 24px; }
+.strike-row { margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.strikes { display: inline-flex; gap: 4px; }
+.strikes i { display: block; width: 16px; height: 16px; border: 2px solid var(--blue); background: var(--ink); }
+.strikes i.on { background: var(--red); border-color: var(--red); }
+
+.review-last { display: flex; flex-direction: column; gap: 6px; }
+.review-last[hidden] { display: none; }
+
+/* Controls: every button shows an icon, its name, and the keyboard key (a little keycap) that does the same thing. */
+.defs { position: absolute; width: 0; height: 0; }
+.pad { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pad-btn, .pad .drop {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+  font: inherit; font-size: 13px; padding: 10px 8px 12px; cursor: pointer; text-transform: uppercase; border: 0;
+}
+.pad-btn { color: var(--cream); background: var(--blue-dark); box-shadow: 0 5px 0 #1b4251; }
+.pad-btn.load { background: var(--blue); color: var(--ink); box-shadow: 0 5px 0 #2c6a80; }
+.pad-btn:active, .pad-btn.down { transform: translateY(4px); box-shadow: 0 1px 0 #1b4251; }
+.pad .drop:active, .pad .drop.down { transform: translateY(4px); box-shadow: 0 1px 0 #a88413; }
+.pad-btn:disabled { background: #566b78; box-shadow: 0 5px 0 #34434d; color: #1c2a33; cursor: default; }
+.pad .drop:disabled { background: #566b78; box-shadow: 0 5px 0 #34434d; color: #1c2a33; }
+.face { display: inline-flex; align-items: center; gap: 8px; }
+.ic { width: 14px; height: 14px; fill: currentColor; shape-rendering: crispEdges; flex: none; }
+
+.keys { display: inline-flex; align-items: center; gap: 4px; }
+.keys i { font-style: normal; font-size: 8px; opacity: 0.8; padding: 0 2px; }
+kbd {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 5px;
+  font: inherit; font-size: 9px; color: var(--ink); background: var(--cream); border: 0;
+  box-shadow: 0 3px 0 #a8a08a; text-transform: uppercase;
+}
+kbd .ic { width: 10px; height: 10px; }
+kbd.wide { min-width: 72px; letter-spacing: 1px; }
+.pad .down kbd, .pad-btn:active kbd, .drop:active kbd { background: var(--gold); box-shadow: 0 1px 0 #a88413; transform: translateY(2px); }
+.pad button:disabled kbd { opacity: 0.45; }
+
+.legend { display: flex; flex-direction: column; gap: 10px; align-items: stretch; text-align: left; }
+.legend > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.legend > div > span:last-child { font-size: 9px; color: var(--gold); text-align: right; }
+.legend kbd { color: var(--ink); }
+
+/* On a phone (no keyboard) the keycaps are just clutter; the big buttons say it all. */
+@media (pointer: coarse) {
+  .pad .keys { display: none; }
+  .pad-btn, .pad .drop { padding: 16px 8px 18px; }
+}
+
+/* Taps must not scroll, zoom, select text, or open a long-press menu. */
+#c, .pad button {
+  touch-action: none;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .pad-btn, .pad .drop { padding-top: 10px; padding-bottom: 10px; }
+}
+
+/* The title is longer than the other games' (20 characters), so it shrinks on narrow phones to stay on one line beside the sound button. */
+@media (max-width: 400px) {
+  h1 { font-size: 10px; }
+}

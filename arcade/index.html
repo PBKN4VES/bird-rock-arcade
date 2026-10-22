@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Bird Rock Arcade | Bird Rock Coffee Roasters</title>
+  <meta name="description" content="Free coffee mini-games from Bird Rock Coffee Roasters. Roast, fill, pour and grind your way to a high score.">
+  <meta property="og:title" content="Bird Rock Arcade">
+  <meta property="og:description" content="Free coffee mini-games from Bird Rock Coffee Roasters.">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/png" href="../assets/Van_Blue.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="arcade">
+    <header class="top">
+      <img class="van" src="../assets/Van_Blue.png" alt="" width="56" height="56">
+      <div class="sign">
+        <p class="eyebrow">Bird Rock Coffee Roasters</p>
+        <h1>Bird Rock Arcade</h1>
+      </div>
+    </header>
+    <p class="lede">Pick a cabinet. Free to play, no sign-up. Beat your best.</p>
+
+    <ol id="floor" class="floor" aria-label="Games"></ol>
+
+    <noscript>
+      <p class="lede">The arcade needs JavaScript. You can still play directly:</p>
+      <ul class="plain">
+        <li><a href="../roast2/">Roast Master 5000</a></li>
+        <li><a href="../fill/">Fill Master 3000</a></li>
+        <li><a href="../pourover/">Pour-Over Power Hour</a></li>
+        <li><a href="../flappy/">Flappy Grinder</a></li>
+      </ul>
+    </noscript>
+
+    <footer class="foot">
+      <p>Scores are saved on this device only.</p>
+      <a href="https://www.birdrockcoffee.com" target="_blank" rel="noopener">Back to birdrockcoffee.com</a>
+    </footer>
+  </main>
+
+  <script src="games.js"></script>
+  <script src="logic.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
