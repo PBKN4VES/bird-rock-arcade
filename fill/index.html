@@ -25,7 +25,7 @@
     </section>
 
     <section class="target">
-      <div class="label">Now filling</div>
+      <div id="kind" class="label">Now filling</div>
       <div id="coffee" class="coffee">Fill Master 3000</div>
       <div id="notes" class="notes"></div>
       <div class="strike-row">
@@ -40,7 +40,7 @@
     </div>
 
     <button id="pour" class="drop" type="button" disabled>Hold to pour</button>
-    <p class="hint">Hold the button, mouse, or Space. Let go at 10 oz.</p>
+    <p class="hint">Hold the button, mouse, or Space. Let go at the bag's target weight.</p>
     <p id="status" class="sr-only" aria-live="polite"></p>
   </main>
 
@@ -49,8 +49,8 @@
     <div class="card">
       <img class="van" src="../assets/Van_Blue.png" alt="Bird Rock van" width="120" height="120">
       <h2 id="title-h">Fill Master 3000</h2>
-      <p>Bags of Bird Rock coffee ride the belt past the filler. When a bag is under the spout, hold to pour and let go at exactly 10 oz.</p>
-      <p>Too light, too full, a spill, or a missed bag is a strike. Three strikes and your shift is over. The belt only gets faster.</p>
+      <p>Bags of Bird Rock coffee ride the belt past the filler. When a bag is under the spout, hold to pour and let go right at its target weight (10 oz for most bags, 2 lb for the big ones; small Blue Label bags are 4 oz or 6 oz).</p>
+      <p>Too light, too full, a spill, or a missed bag is a strike. A tipped-over bag? Don't pour, let it roll by. Three strikes and your shift is over. The belt only gets faster.</p>
       <button id="start" class="btn" type="button">Start shift</button>
     </div>
   </div>
