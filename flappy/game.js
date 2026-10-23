@@ -20,10 +20,15 @@
     wood: '#c98b4f', woodHi: '#e2ae72', woodShade: '#8a5a2b', steel: '#b9c4cc', steelDark: '#7b8a95',
     glass: '#bfe6f2', grounds: '#4a2f18'
   };
+  // Power-up looks: the golden grinder, and the red burr ring.
+  var GOLD = { wood: '#e9b730', woodHi: '#fff0a0', woodShade: '#b07d12', steel: '#fff6c8', steelDark: '#c99a1e' };
+  var RED = { steel: '#e0443a', steelDark: '#8e1b16' };
+  var POWER_COLOR = { gold: '#f2c744', rocket: '#ff8a2a', burrs: '#e0443a' };
+  var GRAB_TIME = 0.7;             // length of the pick-up animation, seconds
 
   var W = L.W, H = L.H, GY = L.GROUND_Y, GX = L.GRINDER_X;
   var canvas = document.getElementById('c');
-  var ctx = canvas.getContext('2d');
+  var ctx = canvas.getContext('2d');   // drawPlayer briefly points this at an offscreen canvas
   var $ = function (id) { return document.getElementById(id); };
   var el = {
     points: $('points'), best: $('best'), banner: $('banner'), crank: $('crank'), hint: $('hint'), status: $('status'),
@@ -37,7 +42,8 @@
   var held = false, heldFor = 0, crankAngle = 0, spin = 1.5, clickT = 0;
   var sec = 0, scroll = 0, shake = 0, flash = 0, deathT = 0, deadVy = 0;
   var deck = L.newDeckState(), sceneId = null, prevScene = null, fade = 1, curSlot = 0;
-  var particles = [], floaters = [];
+  var particles = [], floaters = [], flyers = [];
+  var grabT = 9, grabKind = null, roarT = 0;   // time since the last pick-up, and which one
   var overLine = '', startBest = 0, startScore = readStart();
   var best = readBest();
   var soundOn = true, ac = null;   // on by default; the browser only starts audio after the first tap (Start)
@@ -52,6 +58,8 @@
     var m = /[?&]start=(\d+)/.exec(window.location.search);
     return m ? Math.min(500, parseInt(m[1], 10)) : 0;
   }
+  // ?power=gold|rocket|burrs starts the run with that power-up (for checking the look).
+  function powerForced() { var m = /[?&]power=([a-z]+)/.exec(window.location.search); return m && L.POWER_TIME[m[1]] ? m[1] : null; }
   function sceneForced() { var m = /[?&]scene=([a-z]+)/.exec(window.location.search); return m ? m[1] : null; }
 
   // ---- sound (tiny synth, no files) ----
@@ -81,6 +89,11 @@
     else if (name === 'click') { noise(0.03, 0.12); tone(180, 0.03, 'square', 0.03); }      // one crank tick
     else if (name === 'score') { tone(700, 0.07, 'square', 0.06); tone(1050, 0.12, 'square', 0.06, 0.06); }
     else if (name === 'scene') { tone(520, 0.09, 'square', 0.06); tone(660, 0.09, 'square', 0.06, 0.09); tone(880, 0.09, 'square', 0.06, 0.18); tone(1320, 0.2, 'square', 0.06, 0.27); }
+    else if (name === 'power') { [523, 659, 784, 1047, 1319].forEach(function (f, i) { tone(f, 0.1, 'square', 0.06, i * 0.05); }); tone(1568, 0.25, 'triangle', 0.07, 0.25); }
+    else if (name === 'powerEnd') { tone(784, 0.1, 'square', 0.05); tone(523, 0.16, 'square', 0.05, 0.1); }
+    else if (name === 'scatter') { tone(900, 0.12, 'square', 0.05, 0, 1600); tone(1100, 0.1, 'square', 0.04, 0.06, 1800); }
+    else if (name === 'smash') { noise(0.22, 0.3); tone(140, 0.2, 'square', 0.06, 0, 50); }
+    else if (name === 'roar') { noise(0.12, 0.06); }
     else if (name === 'hit') { noise(0.3, 0.45); tone(260, 0.45, 'sawtooth', 0.08, 0, 60); }
   }
   el.sound.addEventListener('click', function () {
@@ -120,7 +133,9 @@
   function startRun() {
     world = L.newWorld({ score: startScore });
     startBest = best;
-    particles = []; floaters = []; shake = 0; flash = 0; scroll = 0;
+    particles = []; floaters = []; flyers = []; shake = 0; flash = 0; scroll = 0; grabT = 9; grabKind = null;
+    var forcedPower = powerForced();
+    if (forcedPower) { L.givePower(world, forcedPower); grabT = 0; grabKind = forcedPower; }
     setHeld(false);
     sceneId = pickScene(); prevScene = null; fade = 1; curSlot = L.sceneSlot(world.score);
     el.title.hidden = true; el.over.hidden = true;
@@ -147,6 +162,21 @@
     }
   }
 
+  // Gulls in a column fly off in all directions (golden grinder).
+  function scatterGulls(p) {
+    var c = L.pairCenter(p, world.t), cy = c - p.gap / 2 - 9, k = 0;
+    while (cy > -14) {
+      flyers.push({ x: p.x + L.PAIR_W / 2, y: cy, vx: -30 + Math.random() * 110, vy: -70 - Math.random() * 90, life: 1.4, capped: hash(p.id * 13 + k) % 3 === 0, ph: Math.random() });
+      cy -= 14; k++;
+    }
+  }
+  // A rock stack bursts into chunks (golden grinder or rocket flames).
+  function breakRock(p) {
+    var top = L.pairCenter(p, world.t) + p.gap / 2, cx = p.x + L.PAIR_W / 2;
+    for (var y = top + 8; y < GY; y += 14) burst(cx, y, 8, [ART.rock, ART.rockHi, ART.rockShade, ART.rockHatch]);
+    shake = Math.max(shake, 0.12);
+  }
+
   function die(kind) {
     setHeld(false);
     state = 'dying'; deathT = 0; deadVy = -140; shake = 0.3; flash = 0.5;
@@ -166,6 +196,18 @@
         var slot = L.sceneSlot(world.score);
         if (slot > curSlot) { curSlot = slot; changeScene(); }
         hud();
+      } else if (e.type === 'power') {
+        grabT = 0; grabKind = e.kind;
+        banner(L.POWER_NAMES[e.kind].toUpperCase() + '!');
+        burst(GX, world.y, 16, [POWER_COLOR[e.kind], THEME.cream, THEME.gold]);
+        flash = Math.max(flash, 0.25);
+        sfx('power');
+        say(L.POWER_NAMES[e.kind] + '!');
+      } else if (e.type === 'powerEnd') {
+        if (!e.replaced) { sfx('powerEnd'); say(L.POWER_NAMES[e.kind] + ' wore off.'); }
+      } else if (e.type === 'smash') {
+        if (e.what === 'gull') { scatterGulls(e.pair); sfx('scatter'); } else { breakRock(e.pair); sfx('smash'); }
+        floaters.push({ x: e.pair.x + L.PAIR_W / 2, y: world.y - 24, text: e.what === 'gull' ? 'SHOO!' : 'CRUNCH!', life: 0.7 });
       } else if (e.type === 'hit') {
         die(e.kind);
       }
@@ -181,7 +223,7 @@
     el.stats.textContent = 'Last stop: ' + L.sceneName(sceneId);
     el.again.disabled = true;
     el.over.hidden = false;
-    if (window.Leaderboard) Leaderboard.show({ game: 'flappy', score: world.score, practice: startScore > 0, mount: document.getElementById('lb') });
+    if (window.Leaderboard) Leaderboard.show({ game: 'flappy', score: world.score, practice: startScore > 0 || !!powerForced(), mount: document.getElementById('lb') });
     setTimeout(function () { el.again.disabled = false; if (!(window.Leaderboard && Leaderboard.typing())) el.again.focus(); }, 500);   // stops a stray tap from skipping the card
     say('Game over. ' + overLine + ' Score ' + world.score + '. ' + el.rank.textContent + '.');
   }
@@ -229,6 +271,13 @@
     floaters = floaters.filter(function (f) { return f.life > 0; });
     particles.forEach(function (p) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 420 * dt; p.life -= dt; });
     particles = particles.filter(function (p) { return p.life > 0 && p.y < H + 4; });
+    flyers.forEach(function (f) { f.x += f.vx * dt; f.y += f.vy * dt; f.vy -= 30 * dt; f.life -= dt; });
+    flyers = flyers.filter(function (f) { return f.life > 0 && f.y > -20; });
+    grabT += dt;
+    if (state === 'running' && world.power && world.power.kind === 'rocket') {
+      roarT -= dt; if (roarT <= 0) { roarT = 0.12; sfx('roar'); }
+      if (Math.random() < dt * 30) particles.push({ x: GX - 3 + Math.random() * 6, y: world.y + 18 + Math.random() * 20, vx: -40 - Math.random() * 40, vy: 30 + Math.random() * 40, life: 0.3, c: Math.random() < 0.5 ? '#ffd54a' : '#ff7a1a' });
+    }
 
     // The crank spins up while held and winds down when let go; each turn clicks.
     spin += ((held ? 15 : 1.6) - spin) * Math.min(1, dt * (held ? 9 : 3));
@@ -325,8 +374,14 @@
   }
 
   // The wooden hand grinder: steel crank turning on top, wood body, steel ring, glass jar filling with grounds.
-  function drawGrinder(cx, cy, angle, fillPx) {
-    var o = ART.outline;
+  function drawGrinder(cx, cy, angle, fillPx, pal) {
+    var o = ART.outline, A = {};
+    for (var key in ART) A[key] = ART[key];
+    if (pal) for (key in pal) A[key] = pal[key];
+    var ARTx = ART; ART = A;          // the body below reads ART; swap in the power-up colors for this one drawing
+    try { drawGrinderBody(cx, cy, angle, fillPx, o); } finally { ART = ARTx; }
+  }
+  function drawGrinderBody(cx, cy, angle, fillPx, o) {
     // crank: the arm swings toward and away from the viewer, so from the side it slides left and right
     var kx = Math.round(Math.cos(angle) * 11), front = Math.sin(angle) > 0;
     var ay = cy - 19;
@@ -347,6 +402,83 @@
     rect(cx - 4, cy + 8, 1, 4, 'rgba(255,255,255,0.7)');
   }
 
+  // ---- power-ups: pickups, flames, and the grinder with its current power ----
+  function drawPickup(kind, x, y) {
+    var pulse = 1 + Math.round(Math.sin(sec * 6));
+    ctx.globalAlpha = 0.35; disc(x, y, L.PICKUP_R + 2 + pulse, POWER_COLOR[kind]); ctx.globalAlpha = 1;
+    disc(x, y, L.PICKUP_R + 1, ART.outline); disc(x, y, L.PICKUP_R, THEME.cream);
+    if (kind === 'gold') {                       // a golden coffee bean
+      rect(x - 3, y - 5, 6, 10, ART.outline); rect(x - 4, y - 4, 8, 8, ART.outline);
+      rect(x - 2, y - 4, 4, 8, GOLD.wood); rect(x - 3, y - 3, 6, 6, GOLD.wood);
+      rect(x - 2, y - 3, 1, 2, GOLD.woodHi);
+      rect(x, y - 3, 1, 2, GOLD.woodShade); rect(x - 1, y - 1, 1, 2, GOLD.woodShade); rect(x, y + 1, 1, 2, GOLD.woodShade);
+    } else if (kind === 'rocket') {              // a little rocket, nose up, flame flickering
+      rect(x - 2, y - 6, 4, 2, THEME.red); rect(x - 3, y - 4, 6, 7, ART.outline); rect(x - 2, y - 4, 4, 6, '#fbfaf5');
+      rect(x - 1, y - 2, 2, 2, THEME.blue);
+      rect(x - 4, y + 1, 2, 3, THEME.blueDark); rect(x + 2, y + 1, 2, 3, THEME.blueDark);
+      rect(x - 1, y + 3, 2, Math.floor(sec * 12) % 2 ? 3 : 2, '#ff8a2a');
+    } else {                                     // a red burr: toothed ring with a hole
+      disc(x, y, 5, RED.steelDark); disc(x, y, 4, RED.steel);
+      for (var i = 0; i < 8; i++) { var a = i * Math.PI / 4 + sec * 2; rect(x + Math.cos(a) * 5 - 1, y + Math.sin(a) * 5 - 1, 2, 2, RED.steelDark); }
+      disc(x, y, 1, THEME.cream);
+    }
+  }
+  function drawFlames(cx, top, len) {
+    var f = Math.floor(sec * 20);
+    for (var y = 0; y < len; y += 2) {
+      var k = y / len, wob = (hash(f * 31 + y) % 3) - 1;
+      var w = Math.max(2, Math.round(9 * (1 - k * 0.8)));
+      rect(cx - w / 2 + wob, top + y, w, 2, k < 0.15 ? '#fff6c8' : k < 0.45 ? '#ffd54a' : k < 0.8 ? '#ff8a2a' : '#e0443a');
+      if (k < 0.5) rect(cx - 1 + wob, top + y, 2, 2, '#fffbe6');
+    }
+  }
+  // An offscreen canvas for drawing the grinder small and crisp (red burrs).
+  var gCan = document.createElement('canvas'); gCan.width = 40; gCan.height = 56;
+  var gCtx = gCan.getContext('2d');
+  function drawPlayer() {
+    var jar = Math.min(8, Math.floor(world.score / 4));
+    var pw = world.power, kind = pw ? pw.kind : null;
+    var showFx = !!kind, fading = !!kind && L.powerFading(world);
+    if (fading) {                                // blinking as it wears off: glow on, then nearly see-through, faster near the end
+      var rate = 4 + 12 * (1 - pw.left / L.POWER_BLINK);
+      showFx = Math.floor(sec * rate) % 2 === 0;
+    }
+    var dim = fading && !showFx;
+    var grabbing = grabT < GRAB_TIME && grabKind === kind;
+    var g = grabbing ? grabT / GRAB_TIME : 1;
+    // Size: red burrs shrink to 80% with a little squash-and-bounce while picking up.
+    var scale = kind === 'burrs' ? L.BURR_SCALE : 1;
+    if (kind === 'burrs' && grabbing) scale = 1 - (1 - L.BURR_SCALE) * Math.min(1, g * 1.6) + Math.sin(g * Math.PI * 3) * 0.06 * (1 - g);
+    var y = Math.round(world.y);
+    var pal = null;
+    if (showFx && kind === 'gold') pal = grabbing && g < 0.25 ? { wood: '#fffbe6', woodHi: '#ffffff', woodShade: '#fff0a0', steel: '#ffffff', steelDark: '#fff0a0' } : GOLD;
+    if (showFx && kind === 'burrs') pal = RED;
+    if (fading && showFx) {                      // a glow in the power-up's color on the "on" beats
+      ctx.globalAlpha = 0.45; disc(GX, y - 2, Math.round(22 * scale), POWER_COLOR[kind]);
+      ctx.globalAlpha = 0.7; disc(GX, y - 2, Math.round(15 * scale), '#fffbe6'); ctx.globalAlpha = 1;
+    }
+    if (dim) ctx.globalAlpha = 0.25;             // and nearly see-through on the "off" beats
+    if (showFx && kind === 'rocket') drawFlames(GX, y + Math.round(16 * scale), grabbing && g < 0.5 ? L.FLAME_LEN + 16 : L.FLAME_LEN);
+    if (scale === 1) drawGrinder(GX, y, crankAngle, jar, pal);
+    else {
+      var keep = ctx; ctx = gCtx; gCtx.clearRect(0, 0, 40, 56);
+      try { drawGrinder(20, 32, crankAngle, jar, pal); } finally { ctx = keep; }
+      ctx.imageSmoothingEnabled = false;
+      var dw = Math.round(40 * scale), dh = Math.round(56 * scale);
+      ctx.drawImage(gCan, Math.round(GX - 20 * scale), Math.round(y - 32 * scale), dw, dh);
+    }
+    ctx.globalAlpha = 1;
+    if (showFx && kind === 'gold' && Math.floor(sec * 8) % 3 === 0) {   // twinkles
+      var a = sec * 5; rect(GX + Math.cos(a) * 11, y + Math.sin(a) * 15, 2, 2, '#fffbe6');
+    }
+    if (grabbing) {                              // the pick-up ring
+      ctx.globalAlpha = 1 - g;
+      var r = Math.round(10 + g * 30), col = POWER_COLOR[kind];
+      for (var i = 0; i < 16; i++) { var b = i * Math.PI / 8; rect(GX + Math.cos(b) * r - 1, y + Math.sin(b) * r - 1, 3, 3, col); }
+      ctx.globalAlpha = 1;
+    }
+  }
+
   function draw() {
     ctx.clearRect(0, 0, W, H);
     if (prevScene && fade < 1) {
@@ -360,15 +492,20 @@
     var t = world.t;
     world.pairs.forEach(function (p) {
       var c = L.pairCenter(p, t);
-      drawGulls(p, c - p.gap / 2);
-      drawRock(p, c + p.gap / 2);
+      if (!p.gullsGone) drawGulls(p, c - p.gap / 2);
+      if (!p.rockGone) drawRock(p, c + p.gap / 2);
+      if (p.pickup && !p.pickup.got) drawPickup(p.pickup.kind, p.x + L.PAIR_W / 2, L.pickupY(p, t));
+    });
+    flyers.forEach(function (f) {
+      ctx.globalAlpha = Math.max(0, Math.min(1, f.life * 1.5));
+      drawGull(f.x, f.y, ((sec * 14 + f.ph) % 1) < 0.5, f.capped);
+      ctx.globalAlpha = 1;
     });
     if (sceneId) {
       rect(0, GY + 11, W, 16, 'rgba(15,28,38,0.6)');       // keeps the cafe name readable on light pavement
       shadowText(L.sceneName(sceneId).toUpperCase(), W / 2, GY + 22, 8, THEME.cream, 'center');
     }
-    var jar = Math.min(8, Math.floor(world.score / 4));
-    drawGrinder(GX, Math.round(world.y), crankAngle, jar);
+    drawPlayer();
     particles.forEach(function (p) { rect(p.x, p.y, 3, 3, p.c); });
     floaters.forEach(function (f) {
       ctx.globalAlpha = Math.max(0, Math.min(1, f.life * 2));
@@ -394,6 +531,7 @@
   window.__flappy = {
     advance: function (s) { while (s > 0) { var d = Math.min(0.05, s); update(d); s -= d; } draw(); },
     press: press, release: release, start: startRun,
+    power: function (kind) { L.givePower(world, kind); grabT = 0; grabKind = kind; },
     // Draws one cafe at a given scroll distance onto another canvas's context (for contact sheets of all the backdrops).
     snap: function (id, px, dest, dx, dy, k) {
       var keep = [sceneId, prevScene, fade, scroll, world.pairs, particles, floaters, state];
@@ -403,7 +541,9 @@
       sceneId = keep[0]; prevScene = keep[1]; fade = keep[2]; scroll = keep[3]; world.pairs = keep[4]; particles = keep[5]; floaters = keep[6]; state = keep[7];
     },
     get: function () {
-      return { state: state, score: world.score, y: world.y, vy: world.vy, over: world.over, scene: sceneId, prevScene: prevScene, fade: fade,
+      return { power: world.power ? { kind: world.power.kind, left: world.power.left } : null,
+        pickups: world.pairs.filter(function (p) { return p.pickup && !p.pickup.got; }).map(function (p) { return { kind: p.pickup.kind, x: Math.round(p.x) }; }),
+        state: state, score: world.score, y: world.y, vy: world.vy, over: world.over, scene: sceneId, prevScene: prevScene, fade: fade,
         pairs: world.pairs.map(function (p) { return { x: Math.round(p.x), center: Math.round(p.center), gap: Math.round(p.gap), amp: p.amp }; }), line: overLine };
     }
   };
