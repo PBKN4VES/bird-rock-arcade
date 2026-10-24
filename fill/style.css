@@ -3,7 +3,7 @@
 .target { min-height: 0; }
 .target .label { font-size: 8px; color: var(--blue-light); }
 .target .coffee { margin-top: 2px; color: var(--gold); }
-.target .notes { margin-top: 4px; min-height: 24px; }
+.target .notes { margin-top: 4px; }
 .strike-row { margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .strikes { display: inline-flex; gap: 4px; }
 .strikes i { display: block; width: 16px; height: 16px; border: 2px solid var(--blue); background: var(--ink); }

@@ -3,8 +3,8 @@
 .target { min-height: 0; }
 .target .label { font-size: 8px; color: var(--blue-light); }
 .target .coffee { margin-top: 2px; color: var(--gold); }
-.target .notes { margin-top: 4px; min-height: 24px; }
-.target .level { margin-top: 2px; min-height: 14px; }
+.target .notes { margin-top: 4px; }
+.target .level { margin-top: 2px; height: 1.6em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .toprow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .strike-row { display: flex; align-items: center; gap: 8px; }
 /* A tall button is easier to hit while watching the roaster. */

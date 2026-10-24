@@ -57,6 +57,11 @@ h1 { margin: 0; font-size: 13px; color: var(--blue-light); line-height: 1.4; fon
 .target { background: var(--wall); border: 2px solid var(--gold); padding: 6px 10px; text-align: center; min-height: 78px; }
 .coffee { font-size: 11px; color: var(--cream); overflow-wrap: anywhere; }
 .notes { margin-top: 5px; font-size: 8px; color: var(--blue-light); line-height: 1.5; }
+/* The order panel's text changes with every coffee (long names, long tasting notes), so the name gets a fixed 2 lines and the
+   notes a fixed 3. Longer text is cut with "..." instead of growing the panel and pushing the game and button down. */
+.target .coffee, .target .notes { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.target .coffee { line-height: 1.6; height: 3.2em; -webkit-line-clamp: 2; line-clamp: 2; }
+.target .notes { line-height: 1.5; height: 4.5em; -webkit-line-clamp: 3; line-clamp: 3; }
 .level { margin-top: 6px; font-size: 10px; color: var(--gold); }
 
 .stage { position: relative; border: 3px solid var(--blue); background: var(--wall); }
