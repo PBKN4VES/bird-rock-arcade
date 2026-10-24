@@ -10,6 +10,8 @@
   -webkit-user-select: none; user-select: none;
   -webkit-touch-callout: none;
 }
+/* A tall button is easier to hit while watching the grinder. */
+#crank { padding: 34px 12px; }
 #crank.down { transform: translateY(4px); box-shadow: 0 1px 0 #a88413; }
 /* The how-to-play line goes away once the run starts; hidden (not removed) so the page does not jump. */
 .hint.gone { visibility: hidden; }

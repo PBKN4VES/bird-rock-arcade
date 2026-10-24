@@ -49,7 +49,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var el = {
     batches: $('batches'), points: $('points'), best: $('best'), plabel: $('plabel'), coffee: $('coffee'), notes: $('notes'),
-    level: $('level'), strikes: $('strikes'), banner: $('banner'), pour: $('pour'), status: $('status'),
+    level: $('level'), strikes: $('strikes'), banner: $('banner'), pour: $('pour'), hint: $('hint'), status: $('status'),
     title: $('title'), over: $('over'), start: $('start'), again: $('again'), sound: $('sound'),
     score: $('score'), newBest: $('new-best'), rCoffee: $('review-coffee'), rNotes: $('review-notes'),
     rLast: $('review-last'), rStats: $('review-stats'), rLevels: $('review-levels')
@@ -156,6 +156,7 @@
     spawn(first); spawn(first - L.SPACING); spawn(first - 2 * L.SPACING);
     el.title.hidden = true; el.over.hidden = true;
     el.pour.disabled = false;
+    el.hint.classList.remove('gone');
     state = 'running';
     sfx('start');
     hud();
@@ -187,6 +188,7 @@
 
   // Holding is allowed any time, even a moment before the bag tips in: it then starts heating right away.
   function press() {
+    if (state === 'running') el.hint.classList.add('gone');   // the how-to-play line is pre-game only
     if (state !== 'running' || held) return;
     setHeld(true); canHeat = true;
     sfx('heat');                                   // the burner lights whenever the button goes down, beans or not
@@ -268,6 +270,7 @@
     el.rStats.textContent = roasted + (roasted === 1 ? ' batch' : ' batches') + ' roasted · ' + perfects + ' perfect';
     el.again.disabled = true;
     el.over.hidden = false;
+    if (window.ShareCard) ShareCard.show({ game: 'roast2', score: points, line: el.rStats.textContent, mount: document.getElementById('share') });
     if (window.Leaderboard) Leaderboard.show({ game: 'roast2', score: points, mount: document.getElementById('lb') });
     setTimeout(function () { el.again.disabled = false; if (!(window.Leaderboard && Leaderboard.typing())) el.again.focus(); }, 500); // stops a stray tap from skipping the card
     say('Shift over. Overall score ' + points + '. ' + el.rStats.textContent + '.');

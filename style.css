@@ -21,6 +21,9 @@ body {
   min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  /* Games are played by pressing and holding: no text selection or long-press menu anywhere (the initials box below opts back in). */
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
 }
 
 #app {
@@ -124,10 +127,18 @@ h1 { margin: 0; font-size: 13px; color: var(--blue-light); line-height: 1.4; fon
 .lb-input {
   font: inherit; font-size: 18px; letter-spacing: 6px; text-transform: uppercase; text-align: center;
   color: var(--cream); background: var(--wall); border: 2px solid var(--gold); padding: 8px 4px; width: 100%; border-radius: 0;
+  -webkit-user-select: text; user-select: text;   /* iPhones will not let you type in a box that inherits "none" */
 }
 .lb-input:focus { outline: 2px solid var(--cream); outline-offset: 1px; }
 .lb-save { width: auto; font-size: 11px; padding: 10px 14px; align-self: flex-end; }
 .lb-save:disabled { background: #566b78; box-shadow: 0 5px 0 #34434d; color: #1c2a33; cursor: default; }
+
+/* Share card button (share.js): the blue "second choice" next to the gold play-again button */
+.share { display: flex; flex-direction: column; gap: 6px; }
+.share[hidden] { display: none; }
+.share-btn { background: var(--blue); box-shadow: 0 5px 0 var(--blue-dark); }
+.share-btn:active { box-shadow: 0 1px 0 var(--blue-dark); }
+.share-btn:disabled { background: #566b78; box-shadow: 0 5px 0 #34434d; color: #1c2a33; cursor: default; }
 
 @media (prefers-reduced-motion: reduce) {
   .banner { transition: none; }

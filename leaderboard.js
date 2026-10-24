@@ -178,6 +178,8 @@
             put(TAG_KEY, tag);
             head.textContent = 'HIGH SCORES';
             board(res.top || top, { rank: res.rank }, res.rank ? 'YOU\'RE #' + res.rank + '!' : 'SAVED');
+            // tells the share card (share.js) so its poster can show the rank and initials
+            try { doc.dispatchEvent(new win.CustomEvent('arcade:saved', { detail: { game: o.game, tag: tag, rank: res.rank, score: score } })); } catch (e) { /* old browser */ }
             return;
           }
           var code = (res && res.error) || err;

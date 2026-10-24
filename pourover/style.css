@@ -5,9 +5,15 @@
 .hud b { font-size: 12px; }
 
 .target { min-height: 0; }
+/* The panel's text changes with every order (long coffee names, long tasting notes), so each line gets a fixed number of lines.
+   Longer text is cut with "..." instead of growing the panel and pushing the game and buttons down. */
+#label, .target .coffee, .target .notes {
+  display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere;
+}
 .target .label { font-size: 8px; color: var(--blue-light); }
-.target .coffee { margin-top: 2px; color: var(--gold); }
-.target .notes { margin-top: 4px; min-height: 24px; }
+#label { line-height: 1.6; height: 3.2em; -webkit-line-clamp: 2; line-clamp: 2; }
+.target .coffee { margin-top: 2px; color: var(--gold); line-height: 1.6; height: 3.2em; -webkit-line-clamp: 2; line-clamp: 2; }
+.target .notes { margin-top: 4px; line-height: 1.5; height: 4.5em; -webkit-line-clamp: 3; line-clamp: 3; }
 .strike-row { margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .strikes { display: inline-flex; gap: 4px; }
 .strikes i { display: block; width: 16px; height: 16px; border: 2px solid var(--blue); background: var(--ink); }

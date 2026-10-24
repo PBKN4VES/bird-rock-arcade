@@ -7,8 +7,8 @@
 .target .level { margin-top: 2px; min-height: 14px; }
 .toprow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .strike-row { display: flex; align-items: center; gap: 8px; }
-/* The page has to fit a phone screen with the button in view, so the button is a little shorter than the other games'. */
-.drop { padding: 14px 12px; font-size: 16px; }
+/* A tall button is easier to hit while watching the roaster. */
+.drop { padding: 28px 12px; font-size: 16px; }
 .strikes { display: inline-flex; gap: 4px; }
 .strikes i { display: block; width: 16px; height: 16px; border: 2px solid var(--blue); background: var(--ink); }
 .strikes i.on { background: var(--red); border-color: var(--red); }
@@ -25,9 +25,11 @@
 .review-last[hidden] { display: none; }
 
 /* Holding a button must not scroll, zoom, select text, or open a long-press menu. */
-#c, #pour {
+#c, #pour, .hint {
   touch-action: none;
   -webkit-user-select: none; user-select: none;
   -webkit-touch-callout: none;
 }
 #pour.down { transform: translateY(4px); box-shadow: 0 1px 0 #a88413; }
+/* The how-to-play line goes away on the first press of a run; hidden (not removed) so the page does not jump. */
+.hint.gone { visibility: hidden; }

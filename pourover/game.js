@@ -234,6 +234,7 @@
     el.rStats.textContent = bar.served + (bar.served === 1 ? ' pour over' : ' pour overs') + ' served · level ' + bar.level;
     el.again.disabled = true;
     el.over.hidden = false;
+    if (window.ShareCard) ShareCard.show({ game: 'pourover', score: bar.points, line: el.rStats.textContent, mount: document.getElementById('share') });
     if (window.Leaderboard) Leaderboard.show({ game: 'pourover', score: bar.points, mount: document.getElementById('lb') });
     setTimeout(function () { el.again.disabled = false; if (!(window.Leaderboard && Leaderboard.typing())) el.again.focus(); }, 500);   // stops a stray tap from skipping the card
     say('Shift over. Overall score ' + bar.points + '. ' + el.rStats.textContent + '.');

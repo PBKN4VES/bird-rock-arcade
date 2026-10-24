@@ -223,6 +223,7 @@
     el.stats.textContent = 'Last stop: ' + L.sceneName(sceneId);
     el.again.disabled = true;
     el.over.hidden = false;
+    if (window.ShareCard) ShareCard.show({ game: 'flappy', score: world.score, line: el.rank.textContent, practice: startScore > 0 || !!powerForced(), mount: document.getElementById('share') });
     if (window.Leaderboard) Leaderboard.show({ game: 'flappy', score: world.score, practice: startScore > 0 || !!powerForced(), mount: document.getElementById('lb') });
     setTimeout(function () { el.again.disabled = false; if (!(window.Leaderboard && Leaderboard.typing())) el.again.focus(); }, 500);   // stops a stray tap from skipping the card
     say('Game over. ' + overLine + ' Score ' + world.score + '. ' + el.rank.textContent + '.');

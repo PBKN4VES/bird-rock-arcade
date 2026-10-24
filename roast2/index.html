@@ -43,7 +43,7 @@
     </div>
 
     <button id="pour" class="drop" type="button" disabled>Hold to heat</button>
-    <p class="hint">Hold to heat. Let go at the target.</p>
+    <p id="hint" class="hint">Hold to heat. Let go at the target.</p>
     <p id="status" class="sr-only" aria-live="polite"></p>
   </main>
 
@@ -73,12 +73,14 @@
         <p id="review-notes" class="review-notes"></p>
       </div>
       <div id="lb" class="lb" hidden></div>
+      <div id="share" class="share" hidden></div>
       <button id="again" class="btn" type="button">Roast again</button>
     </div>
   </div>
 
   <script src="../leaderboard-config.js"></script>
   <script src="../leaderboard.js"></script>
+  <script src="../share.js"></script>
   <script src="../coffees.js"></script>
   <script src="../logic.js"></script>
   <script src="logic.js"></script>
