@@ -77,12 +77,14 @@ h1 {
 .top3 li { display: grid; grid-template-columns: 1.4em 1fr auto; gap: 6px; font-size: 8px; color: var(--cream); }
 .top3 li.empty { color: #5f7686; }
 .top3 .pts { text-align: right; }
+.top3 .top100 { display: block; margin-top: 8px; text-align: center; font-size: 7px; color: var(--gold); letter-spacing: 1px; }
 .top3 .soon { margin: 7px 0 0; text-align: center; font-size: 6px; color: var(--gold); letter-spacing: 1px; }
 
 .plain { font-size: 10px; line-height: 2.2; }
 .plain a, .foot a { color: var(--gold); }
 .foot { text-align: center; font-size: 8px; color: var(--blue-light); line-height: 2; }
 .foot p { margin: 0; }
+.foot a { display: inline-block; margin: 0 9px; }
 
 @media (min-width: 760px) {
   #arcade { padding-top: 28px; gap: 18px; }

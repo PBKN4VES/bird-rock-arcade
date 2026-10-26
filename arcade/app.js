@@ -49,6 +49,12 @@
     panel.appendChild(el('h2', null, 'TOP 3'));
     li.appendChild(panel);
     drawTop(panel, [], LB && LB.endpoint() ? 'loading' : 'off');
+    // Opens the Top 100 page on this game's tab (hidden while the leaderboard is off).
+    if (LB && LB.endpoint()) {
+      var more = el('a', 'top100', 'SEE TOP 100');
+      more.href = '../scores/?game=' + encodeURIComponent(g.id);
+      panel.appendChild(more);
+    }
     return li;
   }
 

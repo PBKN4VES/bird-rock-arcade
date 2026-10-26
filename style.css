@@ -144,6 +144,14 @@ h1 { margin: 0; font-size: 13px; color: var(--blue-light); line-height: 1.4; fon
 .share-btn { background: var(--blue); box-shadow: 0 5px 0 var(--blue-dark); }
 .share-btn:active { box-shadow: 0 1px 0 var(--blue-dark); }
 .share-btn:disabled { background: #566b78; box-shadow: 0 5px 0 #34434d; color: #1c2a33; cursor: default; }
+.share-btn[hidden], .share-hint[hidden] { display: none; }
+.share-save { background: var(--cream); color: var(--ink); box-shadow: 0 5px 0 #b9ad8c; }
+.share-save:active { box-shadow: 0 1px 0 #b9ad8c; }
+.share-hint { text-align: center; color: var(--blue-light); }
+
+/* "See the top 100" link under the score card's board */
+.lb-more { font-size: 8px; color: var(--blue-light); text-align: center; text-decoration: underline; padding: 4px 0; }
+.lb-more[hidden] { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .banner { transition: none; }

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Top 100 | Bird Rock Arcade</title>
+  <meta name="description" content="The Bird Rock Arcade Top 100 high scores for every game.">
+  <meta property="og:title" content="Bird Rock Arcade: Top 100">
+  <meta property="og:description" content="Who is on top? The 100 best scores in each Bird Rock Arcade game.">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/png" href="../assets/Van_Blue.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="scores">
+    <header class="top">
+      <img class="van" src="../assets/Van_Blue.png" alt="" width="56" height="56">
+      <div class="sign">
+        <p class="eyebrow">Bird Rock Arcade</p>
+        <h1>Top 100</h1>
+      </div>
+    </header>
+
+    <nav id="tabs" class="tabs" aria-label="Game"></nav>
+    <section class="board" aria-live="polite">
+      <h2 id="board-title"></h2>
+      <ol id="rows" class="rows"></ol>
+      <p id="note" class="note" role="status">LOADING…</p>
+    </section>
+
+    <noscript><p class="note">The Top 100 needs JavaScript.</p></noscript>
+
+    <footer class="foot">
+      <a id="play" href="../arcade/">Back to the Arcade</a>
+      <a href="https://www.birdrockcoffee.com" target="_blank" rel="noopener">birdrockcoffee.com</a>
+    </footer>
+  </main>
+
+  <script src="../leaderboard-config.js"></script>
+  <script src="../leaderboard.js"></script>
+  <script src="../arcade/games.js"></script>
+  <script src="logic.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

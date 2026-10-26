@@ -1,7 +1,8 @@
 // Bird Rock Arcade share card (M3), browser side. One file shared by the four games.
 // On a game's score card:  ShareCard.show({ game: 'fill', score: 1200, line: '12 bags filled · 3 perfect', mount: <div id="share"> })
 // draws a 1080 x 1350 poster (logo, game, big score, arcade address) into an image, then a SHARE button hands it to the
-// phone's share menu (or saves it as a PNG where there is no share menu). If the run makes the leaderboard, leaderboard.js
+// phone's share menu (or saves it as a PNG where there is no share menu). Phones also get a SAVE TO PHOTOS button.
+// If the run makes the leaderboard, leaderboard.js
 // fires an "arcade:saved" event and the poster is redrawn with the player's rank and initials.
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory(null);
@@ -40,8 +41,14 @@
     return px;
   }
 
+  // A web page can't write into the Photos app directly. iPhones and iPads do it through the share menu's
+  // "Save Image" row; other phones put a downloaded picture in the gallery/Downloads. iPads can pose as Macs, hence the touch check.
+  function savesViaShareMenu(ua, platform, touchPoints) {
+    return /iPad|iPhone|iPod/.test(String(ua || '')) || (platform === 'MacIntel' && touchPoints > 1);
+  }
+
   var api = {
-    W: W, H: H, GAMES: GAMES, fmt: fmt, titleFor: titleFor, displayUrl: displayUrl, badgeText: badgeText,
+    W: W, H: H, savesViaShareMenu: savesViaShareMenu, GAMES: GAMES, fmt: fmt, titleFor: titleFor, displayUrl: displayUrl, badgeText: badgeText,
     fileName: fileName, shareText: shareText, fitSize: fitSize
   };
   if (!win || !win.document) return api;
@@ -148,9 +155,16 @@
     var file = null, tag = '', rank = 0;
     var btn = el('button', 'btn share-btn', 'Preparing…');
     btn.type = 'button'; btn.disabled = true;
+    // Second button, phones only (where the share menu can take a file): put the picture in Photos.
+    var saveBtn = el('button', 'btn share-btn share-save', 'Save to Photos');
+    saveBtn.type = 'button'; saveBtn.hidden = true;
+    var nav = win.navigator || {};
+    var viaMenu = savesViaShareMenu(nav.userAgent, nav.platform, nav.maxTouchPoints);
+    var hint = el('p', 'lb-msg share-hint', 'THEN TAP "SAVE IMAGE"');
+    hint.hidden = true;
     var msg = el('p', 'lb-msg');
     msg.setAttribute('role', 'status');
-    mount.appendChild(btn); mount.appendChild(msg);
+    mount.appendChild(btn); mount.appendChild(saveBtn); mount.appendChild(hint); mount.appendChild(msg);
 
     function canShareFile() {
       return !!(file && win.navigator && win.navigator.canShare && win.navigator.share && win.navigator.canShare({ files: [file] }));
@@ -162,9 +176,19 @@
         if (mine !== my || run !== my) return;
         if (!blob) { mount.hidden = true; return; }
         file = new win.File([blob], fileName(o.game, score), { type: 'image/png' });
-        btn.textContent = canShareFile() ? 'Share score' : 'Save image';
+        var phone = canShareFile();
+        btn.textContent = phone ? 'Share score' : 'Save image';
+        saveBtn.hidden = !phone; saveBtn.disabled = false;
+        hint.hidden = !(phone && viaMenu);
         btn.disabled = false;
       });
+    }
+
+    function download() {
+      var url = win.URL.createObjectURL(file);
+      var a = el('a'); a.href = url; a.download = file.name;
+      doc.body.appendChild(a); a.click(); doc.body.removeChild(a);
+      setTimeout(function () { win.URL.revokeObjectURL(url); }, 4000);
     }
 
     // Everything the click does must start inside the click itself, or phones refuse to open the share menu.
@@ -177,11 +201,21 @@
           .catch(function (e) { if (!e || e.name !== 'AbortError') msg.textContent = 'COULD NOT SHARE. TRY AGAIN'; });
         return;
       }
-      var url = win.URL.createObjectURL(file);
-      var a = el('a'); a.href = url; a.download = file.name;
-      doc.body.appendChild(a); a.click(); doc.body.removeChild(a);
-      setTimeout(function () { win.URL.revokeObjectURL(url); }, 4000);
+      download();
       msg.textContent = 'IMAGE SAVED';
+    });
+
+    saveBtn.addEventListener('click', function () {
+      if (!file) return;
+      msg.textContent = '';
+      if (viaMenu && canShareFile()) {
+        // The picture alone (no text or link), so the menu leads with "Save Image".
+        win.navigator.share({ files: [file] })
+          .catch(function (e) { if (!e || e.name !== 'AbortError') msg.textContent = 'COULD NOT SAVE. TRY AGAIN'; });
+        return;
+      }
+      download();
+      msg.textContent = 'SAVED. CHECK PHOTOS OR DOWNLOADS';
     });
 
     // leaderboard.js says when the run is saved: redraw the poster with rank and initials.

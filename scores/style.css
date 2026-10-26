@@ -1,0 +1,40 @@
+/* Bird Rock Arcade: the Top 100 page. Palette variables come from ../style.css. */
+
+#scores {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 16px 16px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; justify-content: center; }
+.van { width: 56px; height: 56px; }
+.sign { text-align: left; }
+.eyebrow { margin: 0 0 4px; font-size: 8px; color: var(--blue-light); letter-spacing: 1px; text-transform: uppercase; }
+h1 {
+  margin: 0; font-size: 20px; line-height: 1.3; font-weight: normal; color: var(--cream);
+  text-shadow: 0 0 6px var(--blue), 0 0 14px var(--blue), 3px 3px 0 var(--blue-dark);
+}
+
+.tabs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.tab {
+  font: inherit; font-size: 8px; line-height: 1.5; padding: 10px 6px; cursor: pointer;
+  background: var(--ink); color: var(--cream); border: 3px solid var(--cab, var(--blue));
+}
+.tab[aria-current="true"] { background: var(--cab, var(--blue)); color: #fff; }
+.tab:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.board { background: var(--ink); border: 3px solid var(--blue); padding: 12px 10px 14px; }
+.board h2 { margin: 0 0 10px; font-size: 12px; font-weight: normal; text-align: center; color: var(--gold); }
+.rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.rows li { display: grid; grid-template-columns: 3em 1fr auto; gap: 8px; font-size: 9px; color: var(--cream); padding: 3px 6px; }
+.rows li:nth-child(even) { background: rgba(66, 152, 181, 0.10); }
+.rows li.podium { color: var(--gold); }
+.rows .s { text-align: right; }
+.note { margin: 10px 0 0; text-align: center; font-size: 8px; line-height: 1.8; color: var(--blue-light); }
+.note:empty { display: none; }
+
+.foot { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; font-size: 8px; }
+.foot a { color: var(--blue-light); }

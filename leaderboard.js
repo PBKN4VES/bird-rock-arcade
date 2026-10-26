@@ -3,13 +3,15 @@
 // leaderboard-config.js; while that is blank, everything here stays switched off and the games play as before.
 //
 // In a game's score card:  Leaderboard.show({ game: 'fill', score: 1200, mount: <div class="lb"> })
-//   shows the top 10 and, if the run makes it, asks for 3 initials (classic arcade rule).
+//   shows the top 10 and, if the run makes the top 100, asks for 3 initials (classic arcade rule).
 // In the hub:  Leaderboard.fetchAll(3, function (err, boards) { ... })
+// On the Top 100 page:  Leaderboard.fetchGame('fill', 100, function (err, top) { ... })
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory(null);
   else root.Leaderboard = factory(root);
 })(typeof self !== 'undefined' ? self : this, function (win) {
-  var BOARD_SIZE = 10;
+  var BOARD_SIZE = 100;                // scores kept per game; a run in the top 100 can be saved
+  var SHOW_SIZE = 10;                  // rows drawn on the score card (the rest are on the Top 100 page)
   var TAG_KEY = 'arcade.initials';     // last initials used on this device, offered next time
   var DEV_KEY = 'arcade.lbUrl';        // local testing only: an endpoint set with ?lb=... on localhost
   var TIMEOUT_MS = 8000;
@@ -20,7 +22,7 @@
   function cleanTag(s) { return String(s == null ? '' : s).toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3); }
   function validTag(s) { return /^[A-Z]{3}$/.test(s); }
 
-  // Same rule as rankFor in Code.gs: where a score would land on the board (1..10), or 0. Ties go below.
+  // Same rule as rankFor in Code.gs: where a score would land on the board (1..100), or 0. Ties go below.
   function rankFor(top, score) {
     if (!(score > 0)) return 0;
     var above = 0;
@@ -28,17 +30,21 @@
     return above < BOARD_SIZE ? above + 1 : 0;
   }
 
-  // The score needed to get on a full board (one more than 10th place), or 1 if there's still room.
+  // The score needed to get on a full board (one more than 100th place), or 1 if there's still room.
   function needed(top) { return top.length < BOARD_SIZE ? 1 : top[BOARD_SIZE - 1].score + 1; }
 
-  // The board's rows, with the player's pending or saved run marked. Always 10 rows, blanks shown as ---.
+  // The score card's rows, with the player's pending or saved run marked. Always 10 rows, blanks shown as ---.
+  // A run ranked below 10th gets an 11th row of its own, so the player still sees where they landed.
   function rowsFor(top, mark) {
     var list = top.slice();
     if (mark && mark.pending) list.splice(mark.rank - 1, 0, { tag: '???', score: mark.score });
     var rows = [];
-    for (var i = 0; i < BOARD_SIZE; i++) {
+    for (var i = 0; i < SHOW_SIZE; i++) {
       var e = list[i];
       rows.push({ rank: i + 1, tag: e ? e.tag : '---', score: e ? e.score : 0, empty: !e, you: !!(mark && mark.rank === i + 1) });
+    }
+    if (mark && mark.rank > SHOW_SIZE && list[mark.rank - 1]) {
+      rows.push({ rank: mark.rank, tag: list[mark.rank - 1].tag, score: list[mark.rank - 1].score, empty: false, you: true });
     }
     return rows;
   }
@@ -53,7 +59,7 @@
   function fmt(n) { return String(Math.max(0, Math.floor(Number(n) || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 
   var api = {
-    BOARD_SIZE: BOARD_SIZE, cleanTag: cleanTag, validTag: validTag, rankFor: rankFor, needed: needed,
+    BOARD_SIZE: BOARD_SIZE, SHOW_SIZE: SHOW_SIZE, cleanTag: cleanTag, validTag: validTag, rankFor: rankFor, needed: needed,
     rowsFor: rowsFor, errorText: errorText
   };
   if (!win || !win.document) return api;
@@ -98,6 +104,18 @@
     });
   }
 
+  // One game's board, up to `limit` rows (the Top 100 page and the score card both ask for 100).
+  function fetchGame(game, limit, done) {
+    request('GET', '?game=' + encodeURIComponent(game) + '&limit=' + (limit || SHOW_SIZE), null, function (err, data) {
+      if (err || !data || !data.ok) done(err || (data && data.error) || 'bad');
+      else done(null, data.top || []);
+    });
+  }
+
+  // Where this file lives: the Top 100 page is found relative to it, so the link works from any game's folder.
+  var BASE = (doc.currentScript && doc.currentScript.src) ? doc.currentScript.src : win.location.href;
+  function scoresUrl(game) { return new win.URL('scores/' + (game ? '?game=' + encodeURIComponent(game) : ''), BASE).href; }
+
   function el(tag, cls, text) {
     var n = doc.createElement(tag);
     if (cls) n.className = cls;
@@ -118,17 +136,19 @@
     var body = el('div', 'lb-body');
     var status = el('p', 'lb-msg', 'LOADING…');
     status.setAttribute('role', 'status');
-    mount.appendChild(head); mount.appendChild(body); mount.appendChild(status);
+    var more = el('a', 'lb-more', 'SEE THE TOP 100');
+    more.href = scoresUrl(o.game); more.target = '_blank'; more.rel = 'noopener';
+    mount.appendChild(head); mount.appendChild(body); mount.appendChild(status); mount.appendChild(more);
 
-    request('GET', '?game=' + encodeURIComponent(o.game), null, function (err, data) {
+    // Ask for all 100 so the page can tell where this run would land, even below 10th place.
+    fetchGame(o.game, BOARD_SIZE, function (err, top) {
       if (my !== run) return;
-      if (err || !data || !data.ok) { status.textContent = 'LEADERBOARD OFFLINE'; return; }
-      var top = data.top || [];
+      if (err) { status.textContent = 'LEADERBOARD OFFLINE'; more.hidden = true; return; }
       var rank = rankFor(top, score);
-      if (rank) ask(top, rank); else board(top, null, score > 0 && !o.practice ? 'TOP 10 NEEDS ' + fmt(needed(top)) : (o.practice ? 'TEST RUN: NOT RANKED' : ''));
+      if (rank) ask(top, rank); else board(top, null, score > 0 && !o.practice ? 'TOP 100 NEEDS ' + fmt(needed(top)) : (o.practice ? 'TEST RUN: NOT RANKED' : ''));
     });
 
-    // Draws the 10 rows into `into` (default: the whole body, replacing what's there).
+    // Draws the rows (see rowsFor) into `into` (default: the whole body, replacing what's there).
     function board(top, mark, msg, into) {
       if (!into) { body.innerHTML = ''; into = body; }
       var ol = el('ol', 'lb-list');
@@ -200,6 +220,6 @@
     return !!(a && a.classList && a.classList.contains('lb-input'));
   }
 
-  api.endpoint = endpoint; api.fetchAll = fetchAll; api.show = show; api.typing = typing;
+  api.endpoint = endpoint; api.fetchAll = fetchAll; api.fetchGame = fetchGame; api.scoresUrl = scoresUrl; api.show = show; api.typing = typing;
   return api;
 });
