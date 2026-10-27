@@ -1,0 +1,57 @@
+/* Forklift Frenzy: only what differs from ../style.css (colors, font and cards come from there). */
+
+#app { gap: 6px; }
+.hud { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.hud div { padding: 3px 4px; }
+.hud b { font-size: 11px; white-space: nowrap; }
+.hud b.low { color: var(--red); }
+
+/* The warehouse is portrait (4:5). It shrinks to leave room for the controls on short phone screens. */
+.stage { width: fit-content; max-width: 100%; margin: 0 auto; }
+#c {
+  width: min(calc(100vw - 38px), calc((100dvh - 300px) * 0.8), 404px);
+  min-width: 200px; height: auto; aspect-ratio: 4 / 5;
+}
+.banner { top: 23%; font-size: 14px; line-height: 1.5; padding: 0 8px; white-space: pre-line; }
+
+/* This truck's bays: color chip, code, coffee name. Two lines are kept free so the page does not jump. */
+.bays {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 10px;
+  font-size: 7px; color: var(--blue-light); min-height: 2.8em; line-height: 1.6;
+}
+.bays span { white-space: nowrap; }
+.bays i { display: inline-block; width: 8px; height: 8px; margin-right: 4px; vertical-align: -1px; border: 1px solid var(--ink); }
+.bays b { font-weight: normal; color: var(--cream); margin-right: 3px; }
+
+/* Controls: steer pad on the left, forks on the right. */
+.pad { display: grid; grid-template-columns: 3fr 1.5fr; gap: 14px; }
+.steer { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 46px); gap: 6px; }
+.steer .honk { grid-column: 1; grid-row: 1; font-size: 9px; background: var(--red); color: var(--cream); box-shadow: 0 4px 0 #8a2218; }
+.steer .honk.on { box-shadow: 0 1px 0 #8a2218; }
+.steer .fwd { grid-column: 2; grid-row: 1; }
+.steer .left { grid-column: 1; grid-row: 2; }
+.steer .back { grid-column: 2; grid-row: 2; }
+.steer .right { grid-column: 3; grid-row: 2; }
+.forks { display: grid; grid-template-rows: repeat(2, 46px); gap: 6px; }
+.ctl {
+  font: inherit; font-size: 16px; color: var(--ink); background: var(--gold);
+  border: 0; padding: 0; cursor: pointer; box-shadow: 0 4px 0 #a88413;
+  touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+.forks .ctl { font-size: 9px; background: var(--blue-light); box-shadow: 0 4px 0 var(--blue-dark); }
+.ctl.on { transform: translateY(3px); box-shadow: 0 1px 0 #a88413; }
+.forks .ctl.on { box-shadow: 0 1px 0 var(--blue-dark); }
+.ctl:disabled { background: #566b78; box-shadow: 0 4px 0 #34434d; color: #1c2a33; cursor: default; }
+#c { touch-action: none; }
+
+/* Keyboard help only where there is a mouse: the help lines and the key letter on each fork button. */
+.keys, .kbd { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .keys { display: block; }
+  .kbd { display: inline-block; margin-left: 6px; padding: 2px 4px; border: 1px solid var(--ink); font-size: 7px; }
+}
+
+.how { font-size: 8px; color: var(--blue-light); line-height: 1.8; }
+.how.warn { color: var(--gold); }
+.over-line { font-size: 12px; color: var(--red); line-height: 1.5; }
+.over-line.good { color: var(--gold); }

@@ -23,6 +23,12 @@ window.ARCADE_GAMES = [
     shot: 'shots/flappy.png', shotPos: '50% 0%'
   },
   {
+    id: 'dock', title: 'Forklift Frenzy', sub: '',
+    blurb: 'Shelve every pallet before the truck clock runs out.',
+    href: '../dock/', bestKey: 'dock.bestScore', color: '#d9a520',
+    shot: 'shots/dock.png', shotPos: '50% 50%'
+  },
+  {
     id: 'roast2', title: 'Roast Master 5000', sub: '',
     blurb: 'Hold to heat the roaster. Let go at the perfect temp.',
     href: '../roast2/', bestKey: 'roast2.bestScore', color: '#c8553d',

@@ -1,4 +1,4 @@
-// Bird Rock Arcade share card (M3), browser side. One file shared by the four games.
+// Bird Rock Arcade share card (M3), browser side. One file shared by every game.
 // On a game's score card:  ShareCard.show({ game: 'fill', score: 1200, line: '12 bags filled · 3 perfect', mount: <div id="share"> })
 // draws a 1080 x 1350 poster (logo, game, big score, arcade address) into an image, then a SHARE button hands it to the
 // phone's share menu (or saves it as a PNG where there is no share menu).
@@ -13,6 +13,7 @@
     fill:     { title: 'Fill Master 3000',     color: '#4298B5' },
     pourover: { title: 'Pour-Over Power Hour', color: '#5b8c5a' },
     flappy:   { title: 'Flappy Grinder',       color: '#8a5fb0' },
+    dock:     { title: 'Forklift Frenzy',      color: '#d9a520' },
     roast2:   { title: 'Roast Master 5000',    color: '#c8553d' }
   };
   var INK = '#0f1c26', WALL = '#173547', BLUE = '#4298B5', BLUE_LIGHT = '#9ad0e3', CREAM = '#f6edd6', GOLD = '#f2c744';

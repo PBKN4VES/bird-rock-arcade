@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Forklift Frenzy | Bird Rock Coffee Roasters</title>
+  <meta name="description" content="Drive the roastery forklift and shelve every pallet of green coffee in its bay before the truck timer runs out.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+    <header class="top">
+      <h1>Forklift Frenzy</h1>
+      <button id="sound" type="button" aria-pressed="true">Sound: on</button>
+    </header>
+
+    <section class="hud" aria-label="Score">
+      <div><span>Score</span><b id="points">0</b></div>
+      <div><span>Time</span><b id="time">0</b></div>
+      <div><span>Forks</span><b id="forks">Floor</b></div>
+      <div><span>Strikes</span><b id="strikes">---</b></div>
+    </section>
+
+    <div class="stage">
+      <canvas id="c" width="256" height="320" aria-label="Top-down roastery warehouse with shelf racks, a loading dock and a forklift"></canvas>
+      <div id="banner" class="banner" aria-hidden="true"></div>
+    </div>
+
+    <div id="bays" class="bays" aria-label="Bays this truck"></div>
+
+    <div class="pad">
+      <div class="steer" aria-label="Drive">
+        <button class="ctl honk" type="button" data-a="honk" aria-label="Honk" disabled>Honk<span class="kbd">Space</span></button>
+        <button class="ctl fwd" type="button" data-a="fwd" aria-label="Forward" disabled>&#9650;</button>
+        <button class="ctl left" type="button" data-a="left" aria-label="Turn left" disabled>&#9664;</button>
+        <button class="ctl back" type="button" data-a="back" aria-label="Reverse" disabled>&#9660;</button>
+        <button class="ctl right" type="button" data-a="right" aria-label="Turn right" disabled>&#9654;</button>
+      </div>
+      <div class="forks" aria-label="Forks">
+        <button class="ctl" type="button" data-a="up" aria-label="Raise forks" disabled>Forks &#9650;<span class="kbd">E</span></button>
+        <button class="ctl" type="button" data-a="down" aria-label="Lower forks or set down" disabled>Forks &#9660;<span class="kbd">Q</span></button>
+      </div>
+    </div>
+    <p class="hint keys">Keys: arrows or WASD drive and turn. Forks: E or R up, Q or F down. Honk: Space.</p>
+    <p id="status" class="sr-only" aria-live="polite"></p>
+  </main>
+
+  <!-- Title screen -->
+  <div id="title" class="overlay" role="dialog" aria-labelledby="title-h">
+    <div class="card">
+      <img class="van" src="../assets/Van_Blue.png" alt="Bird Rock van" width="120" height="120">
+      <h2 id="title-h">Forklift Frenzy</h2>
+      <p>A truck of green coffee just pulled in. Shelve every pallet in the bay with its coffee's color and code before the clock runs out.</p>
+      <p>You get 5 seconds to study the warehouse first.</p>
+      <p class="how">&#9650;&#9660; drive &middot; &#9664;&#9654; turn<br>Forks &#9650;&#9660; lift and lower</p>
+      <p class="how keys">Keyboard: arrows or WASD drive and turn.<br>Forks: E or R up, Q or F down. Honk: Space.</p>
+      <p class="how">Drive the forks into a pallet at the same height to pick it up. Lower it onto a free shelf to set it down.</p>
+      <p class="how warn">Watch for coworkers on the floor: honk so they keep clear. Wrong bay, bumping a coworker or running out of time is a strike. Three strikes ends the shift.</p>
+      <button id="start" class="btn" type="button">Start shift</button>
+    </div>
+  </div>
+
+  <!-- Game over -->
+  <div id="over" class="overlay" role="dialog" aria-labelledby="over-h" hidden>
+    <div class="card review">
+      <p class="eyebrow">Overall Score</p>
+      <h2 id="over-h" class="sr-only">Shift over: your overall score</h2>
+      <p id="new-best" class="new-best" hidden>New best!</p>
+      <div class="score"><span id="score">0</span></div>
+      <p id="over-line" class="over-line"></p>
+      <p id="review-stats" class="review-stats"></p>
+      <div id="lb" class="lb" hidden></div>
+      <div id="share" class="share" hidden></div>
+      <button id="again" class="btn" type="button">Clock in again</button>
+    </div>
+  </div>
+
+  <script src="../leaderboard-config.js"></script>
+  <script src="../leaderboard.js"></script>
+  <script src="../share.js"></script>
+  <script src="../coffees.js"></script>
+  <script src="logic.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
