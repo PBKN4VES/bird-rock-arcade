@@ -663,7 +663,7 @@
     tickMovers(run, dt);
     tickWalkers(run, dt);
     if (run.state !== 'play') return;
-    if (tr.time >= tr.limit) {
+    if (!tr.lv.untimed && tr.time >= tr.limit) {   // tutorial lessons (lv.untimed) have no clock
       emit(run, 'timeout', {});
       strike(run, 'timeout');
       if (run.state !== 'over') run.state = 'failed';
@@ -673,7 +673,7 @@
   function checkClear(run) {
     var tr = run.truck;
     if (run.state !== 'play' || tr.carry != null || !tr.lv.pallets.length || remaining(tr.lv) > 0) return;
-    var bonus = Math.floor(Math.max(0, tr.limit - tr.time)) * TIME_PTS * mult(run);
+    var bonus = tr.lv.untimed ? 0 : Math.floor(Math.max(0, tr.limit - tr.time)) * TIME_PTS * mult(run);
     run.score += bonus;
     if (tr.strikes === 0) run.streak++;
     run.trucksCleared++;
@@ -799,7 +799,8 @@
     run.truck.strikes++;
     run.streak = 0;
     emit(run, 'strike', { why: why, count: run.strikes });
-    if (run.strikes >= STRIKES) { run.state = 'over'; emit(run, 'over', { score: run.score }); }
+    // forgiving (the tutorial): strikes still show, but never end the run
+    if (!run.opts.forgiving && run.strikes >= STRIKES) { run.state = 'over'; emit(run, 'over', { score: run.score }); }
   }
 
   function emit(run, type, data) { data.type = type; run.events.push(data); }

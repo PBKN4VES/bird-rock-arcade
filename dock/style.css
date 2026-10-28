@@ -55,3 +55,37 @@
 .how.warn { color: var(--gold); }
 .over-line { font-size: 12px; color: var(--red); line-height: 1.5; }
 .over-line.good { color: var(--gold); }
+
+/* Title card: pick Tutorial or a real shift (Roger, 2026-10-28), and how to steer. */
+.modes { display: flex; flex-direction: column; gap: 12px; }
+.modes .btn span { display: block; margin-top: 6px; font-size: 7px; text-transform: none; line-height: 1.5; }
+.btn.alt { background: var(--blue-light); box-shadow: 0 5px 0 var(--blue-dark); }
+.btn.alt:active { box-shadow: 0 1px 0 var(--blue-dark); }
+.steer-pick { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 8px; color: var(--blue-light); }
+.steer-pick button { font: inherit; font-size: 8px; color: var(--cream); background: transparent; border: 2px solid var(--blue); padding: 6px 8px; cursor: pointer; }
+.steer-pick button[aria-pressed="true"] { background: var(--blue); color: var(--ink); }
+
+/* Tutorial: a coach panel takes the score bar's place. */
+.coach { display: none; background: var(--wall); border: 2px solid var(--gold); padding: 5px 8px; min-height: 66px; }
+body.tut .coach { display: block; }
+body.tut .hud { display: none; }
+.coach p { margin: 0; }
+.coach-h { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 7px; color: var(--gold); }
+#skip { font: inherit; font-size: 7px; color: var(--blue-light); background: transparent; border: 1px solid var(--blue); padding: 2px 5px; cursor: pointer; }
+.coach-intro { margin-top: 4px !important; font-size: 7px; line-height: 1.6; color: var(--cream); }
+.coach-step { margin-top: 4px !important; font-size: 7px; line-height: 1.6; color: var(--gold); }
+body.tut #c { width: min(calc(100vw - 38px), calc((100dvh - 336px) * 0.8), 404px); }
+
+/* Swipe steering: a swipe pad replaces the four drive buttons; Honk stays. Swiping on the warehouse works too. */
+.swipe { display: none; }
+.pad.swipe-on .fwd, .pad.swipe-on .back, .pad.swipe-on .left, .pad.swipe-on .right { display: none; }
+.pad.swipe-on .honk { grid-row: 1 / 3; }
+.pad.swipe-on .swipe {
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  grid-column: 2 / 4; grid-row: 1 / 3; padding: 4px 0; border: 2px dashed var(--gold); background: var(--wall);
+  color: var(--gold); font-size: 8px; text-align: center; line-height: 1.6;
+  touch-action: none; -webkit-user-select: none; user-select: none; cursor: grab;
+}
+.swipe b { font-weight: normal; color: var(--cream); }
+.swipe span { font-size: 9px; }
+.swipe.on { background: #22414f; }

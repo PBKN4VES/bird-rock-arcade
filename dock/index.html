@@ -25,6 +25,12 @@
       <div><span>Strikes</span><b id="strikes">---</b></div>
     </section>
 
+    <section id="coach" class="coach" aria-label="Tutorial">
+      <p class="coach-h"><span id="coach-n"></span><button id="skip" type="button">Skip &rsaquo;</button></p>
+      <p id="coach-intro" class="coach-intro"></p>
+      <p id="coach-step" class="coach-step" aria-live="polite"></p>
+    </section>
+
     <div class="stage">
       <canvas id="c" width="256" height="320" aria-label="Top-down roastery warehouse with shelf racks, a loading dock and a forklift"></canvas>
       <div id="banner" class="banner" aria-hidden="true"></div>
@@ -39,6 +45,7 @@
         <button class="ctl left" type="button" data-a="left" aria-label="Turn left" disabled>&#9664;</button>
         <button class="ctl back" type="button" data-a="back" aria-label="Reverse" disabled>&#9660;</button>
         <button class="ctl right" type="button" data-a="right" aria-label="Turn right" disabled>&#9654;</button>
+        <div id="swipe" class="swipe" aria-label="Swipe to drive"><span>&#9650;</span><b>Swipe<br>to drive</b><span>&#9660;</span></div>
       </div>
       <div class="forks" aria-label="Forks">
         <button class="ctl" type="button" data-a="up" aria-label="Raise forks" disabled>Forks &#9650;<span class="kbd">E</span></button>
@@ -55,12 +62,28 @@
       <img class="van" src="../assets/Van_Blue.png" alt="Bird Rock van" width="120" height="120">
       <h2 id="title-h">Forklift Frenzy</h2>
       <p>A truck of green coffee just pulled in. Shelve every pallet in the bay with its coffee's color and code before the clock runs out.</p>
-      <p>You get 5 seconds to study the warehouse first.</p>
-      <p class="how">&#9650;&#9660; drive &middot; &#9664;&#9654; turn<br>Forks &#9650;&#9660; lift and lower</p>
+      <div class="modes">
+        <button id="tutorial" class="btn alt" type="button">Tutorial<span>Learn the ropes. No timer.</span></button>
+        <button id="start" class="btn" type="button">Start shift<span>Beat the clock. Three strikes and you're out.</span></button>
+      </div>
+      <div class="steer-pick" role="group" aria-label="Steering">
+        <span>Steering</span>
+        <button type="button" data-steer="swipe">Swipe</button>
+        <button type="button" data-steer="buttons">Buttons</button>
+      </div>
+      <p id="how" class="how"></p>
       <p class="how keys">Keyboard: arrows or WASD drive and turn.<br>Forks: E or R up, Q or F down. Honk: Space.</p>
-      <p class="how">Drive the forks into a pallet at the same height to pick it up. Lower it onto a free shelf to set it down.</p>
-      <p class="how warn">Watch for coworkers on the floor: honk so they keep clear. Wrong bay, bumping a coworker or running out of time is a strike. Three strikes ends the shift.</p>
-      <button id="start" class="btn" type="button">Start shift</button>
+    </div>
+  </div>
+
+  <!-- Tutorial done -->
+  <div id="done" class="overlay" role="dialog" aria-labelledby="done-h" hidden>
+    <div class="card review">
+      <p class="eyebrow">Tutorial complete</p>
+      <h2 id="done-h">You're cleared to drive!</h2>
+      <p class="how">In a real shift every truck has a timer. A wrong bay, bumping a coworker or running out of time is a strike. Three strikes ends the shift.</p>
+      <button id="done-start" class="btn" type="button">Start shift</button>
+      <button id="done-again" class="btn alt" type="button">Replay tutorial</button>
     </div>
   </div>
 
@@ -84,6 +107,7 @@
   <script src="../share.js"></script>
   <script src="../coffees.js"></script>
   <script src="logic.js"></script>
+  <script src="tutorial.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

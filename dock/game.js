@@ -1,10 +1,11 @@
 // Forklift Frenzy (folder and id: dock): drawing, input and screens. Rules live in logic.js.
 // Feel-test switches: ?swing=1 strict swing turns (default turns in place, Roger 2026-10-26), ?prep=N seconds of study time,
 // ?truck=N first truck, ?trucks=N trucks per shift (default: no limit, the run goes until three strikes).
+// ?lesson=N opens the tutorial at lesson N, skipping the title card.
 (function () {
   'use strict';
 
-  var L = window.DockLogic;
+  var L = window.DockLogic, TUT = window.DockTutorial;
 
   // Colors and font in one place so tweaks are easy. (Same palette as the other games.)
   var THEME = {
@@ -31,6 +32,8 @@
   var SWING = /[?&]swing=1/.test(window.location.search);   // strict swing blocked too many turns (a third, even in an empty warehouse)
   var BETWEEN = 2.2;                                 // seconds of banner between trucks
   var REPEAT = { fwd: true, back: true, up: true, down: true };   // holding these keeps going; turns are one per press
+  var LESSON = readNum('lesson', 0, 0, 20);
+  var DESK = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;   // mouse and keyboard
 
   var canvas = document.getElementById('c');
   var ctx = canvas.getContext('2d');
@@ -38,7 +41,10 @@
   var el = {
     points: $('points'), time: $('time'), forks: $('forks'), strikes: $('strikes'), banner: $('banner'), bays: $('bays'),
     status: $('status'), title: $('title'), over: $('over'), start: $('start'), again: $('again'), sound: $('sound'),
-    score: $('score'), newBest: $('new-best'), line: $('over-line'), stats: $('review-stats')
+    score: $('score'), newBest: $('new-best'), line: $('over-line'), stats: $('review-stats'),
+    tutorial: $('tutorial'), done: $('done'), doneStart: $('done-start'), doneAgain: $('done-again'), how: $('how'),
+    coachN: $('coach-n'), coachIntro: $('coach-intro'), coachStep: $('coach-step'), skip: $('skip'), swipe: $('swipe'),
+    pad: document.querySelector('.pad')
   };
   var buttons = Array.prototype.slice.call(document.querySelectorAll('.ctl'));
 
@@ -53,6 +59,9 @@
   var soundOn = true, ac = null;
   var bannerTimeout = 0;
   var seen = {}, news = '';       // hazards met so far this run, and the one introduced on this truck
+  var tutorial = false;           // this run is the tutorial (no clock, strikes never end it, nothing saved or ranked)
+  var steer = readSteer();        // 'swipe' or 'buttons'
+  var goTurn = false;             // the action just taken came from a swipe (a swipe's turn does not stop a held drive)
 
   function readNum(key, def, lo, hi) {
     var m = new RegExp('[?&]' + key + '=(\\d+(?:\\.\\d+)?)').exec(window.location.search);
@@ -60,6 +69,12 @@
   }
   function readBest() { try { return parseInt(localStorage.getItem('dock.bestScore'), 10) || 0; } catch (e) { return 0; } }
   function saveBest(v) { try { localStorage.setItem('dock.bestScore', String(v)); } catch (e) { /* private mode */ } }
+  // Swipe steering is the default on phones (Roger, 2026-10-26: the forklift-relative buttons were confusing there).
+  function readSteer() {
+    var v = null;
+    try { v = localStorage.getItem('dock.steer'); } catch (e) { /* private mode */ }
+    return v === 'swipe' || v === 'buttons' ? v : (DESK ? 'buttons' : 'swipe');
+  }
 
   // ---- sound (tiny synth, no files) ----
   function ensureAudio() {
@@ -141,11 +156,16 @@
   }
   function fmt(n) { return Number(n).toLocaleString('en-US'); }
 
-  function startRun() {
-    run = L.newRun(Math.random, { truckNo: FIRST_TRUCK, swing: SWING });
+  function startRun() { begin(false); }
+  function startTutorial(n) { begin(true, n); }
+  function begin(tut, lesson) {
+    tutorial = tut;
+    document.body.classList.toggle('tut', tut);
+    run = tut ? L.newRun(Math.random, { truckNo: lesson || 1, swing: false, makeLevel: TUT.makeLevel, forgiving: true })
+      : L.newRun(Math.random, { truckNo: FIRST_TRUCK, swing: SWING });
     startBest = best;
     particles = []; floaters = []; shake = 0; flash = 0; anim = null; queued = []; overT = -1; seen = {};
-    el.title.hidden = true; el.over.hidden = true;
+    el.title.hidden = true; el.over.hidden = true; el.done.hidden = true;
     setControls(true);
     mode = 'play';
     sfx('start');
@@ -204,17 +224,18 @@
         origins = pickOrigins(tr.lv.origins);
         showBays();
         anim = null; queued = []; lastPrepSec = -1;
+        if (tutorial) { startLesson(); return; }
         if (PREP > 0) run.prep = PREP; else L.skipPrep(run);
         banner('TRUCK ' + truckIndex() + (SHIFT ? ' OF ' + SHIFT : ''));
         var nw = hazardNews(tr.lv);
         news = nw ? nw[0] : '';
         say('Truck ' + truckIndex() + ': ' + L.truckPallets(tr.lv) + ' pallets. ' + (nw ? nw[1] + ' ' : '') + 'Study the warehouse.');
-      } else if (e.type === 'go') { sfx('go'); banner('GO!'); say('Go!'); }
+      } else if (e.type === 'go') { sfx('go'); if (!tutorial) { banner('GO!'); say('Go!'); } }
       else if (e.type === 'honk') sfx('honk');
       else if (e.type === 'door') { if (!e.open) sfx('door'); }
       else if (e.type === 'hit') {
         sfx('hit'); banner('SAFETY MEETING!', true); shake = 0.3; flash = 0.2;
-        say((e.walked ? 'A coworker walked into the forklift.' : 'You bumped a coworker.') + ' Strike. Honk to warn them.');
+        say((e.walked ? 'A coworker walked into the forklift.' : 'You bumped a coworker.') + (tutorial ? '' : ' Strike.') + ' Honk to warn them.');
       }
       else if (e.type === 'move') sfx(e.action === 'back' ? 'reverse' : 'drive');
       else if (e.type === 'turn') sfx('turn');
@@ -225,22 +246,25 @@
       else if (e.type === 'shelve') {
         sfx('shelve');
         var c = forkPoint();
-        floaters.push({ x: c.x, y: c.y - 6, text: '+' + e.points, life: 0.9 });
-        say('Shelved. Plus ' + e.points + '.');
+        floaters.push({ x: c.x, y: c.y - 6, text: tutorial ? 'NICE!' : '+' + e.points, life: 0.9 });
+        say(tutorial ? 'Shelved.' : 'Shelved. Plus ' + e.points + '.');
       } else if (e.type === 'wrong') {
-        sfx('wrong'); banner('WRONG BAY!', true); shake = 0.25; say('Wrong bay. Strike.');
+        sfx('wrong'); banner('WRONG BAY!', true); shake = 0.25; say(tutorial ? 'Wrong bay.' : 'Wrong bay. Strike.');
       } else if (e.type === 'timeout') {
         sfx('timeout'); banner("TIME'S UP!", true); say('Time is up. Strike.');
       } else if (e.type === 'clear') {
         sfx('clear');
-        banner('TRUCK CLEARED!' + (e.bonus ? '\n+' + e.bonus + ' TIME' : ''));
-        say('Truck cleared. Time bonus ' + e.bonus + '.');
+        if (tutorial) { banner('LESSON CLEARED!'); say('Lesson cleared.'); }
+        else {
+          banner('TRUCK CLEARED!' + (e.bonus ? '\n+' + e.bonus + ' TIME' : ''));
+          say('Truck cleared. Time bonus ' + e.bonus + '.');
+        }
       } else if (e.type === 'over') {
         overT = 1.2; overGood = false;
         overLine = ['Three strikes. Safety meeting at 3.', 'Forklift license under review.', 'The pallets win this round.'][Math.floor(Math.random() * 3)];
       }
       if (e.type === 'strike' || e.type === 'shelve' || e.type === 'clear') hud();
-      if (e.type === 'shelve' || e.type === 'clear') { if (run.score > best) { best = run.score; saveBest(best); } }
+      if (!tutorial && (e.type === 'shelve' || e.type === 'clear')) { if (run.score > best) { best = run.score; saveBest(best); } }
     });
     if (run.state === 'cleared' || run.state === 'failed') { mode = 'between'; betweenT = BETWEEN; held = []; queued = []; }
   }
@@ -266,10 +290,103 @@
     say('Shift over. ' + overLine + ' Score ' + run.score + '.');
   }
 
+  // ---- tutorial ----
+  // Control words for the coach, to match how this player steers.
+  function words() {
+    if (steer === 'swipe') return { drive: 'Swipe the way you want to go; hold to keep driving.', into: 'Swipe toward it',
+      up: 'Forks \u25B2', down: 'Forks \u25BC', honk: 'Honk' };
+    if (DESK) return { drive: 'Arrow keys or WASD drive and turn.', into: 'Press Up', up: 'Forks up (E)', down: 'Forks down (Q)',
+      honk: 'Honk (Space)' };
+    return { drive: '\u25B2 \u25BC drive, \u25C0 \u25B6 turn.', into: 'Press \u25B2', up: 'Forks \u25B2', down: 'Forks \u25BC', honk: 'Honk' };
+  }
+  function fill(str) {
+    var w = words();
+    return str.replace('{DRIVE}', w.drive).replace('{HONK}', w.honk).replace('{UP}', w.up).replace('{DOWN}', w.down);
+  }
+  function setText(node, str) { if (node.textContent !== str) node.textContent = str; }
+
+  function startLesson() {
+    var n = run.truckNo, lesson = TUT.LESSONS[n - 1];
+    L.skipPrep(run);
+    news = '';
+    el.coachN.textContent = 'LESSON ' + n + ' OF ' + TUT.LESSONS.length + ': ' + lesson.name;
+    el.coachIntro.textContent = fill(lesson.intro);
+    banner('LESSON ' + n);
+    say('Lesson ' + n + ': ' + lesson.name.toLowerCase() + '. ' + fill(lesson.intro));
+  }
+  function skipLesson() {
+    if (!tutorial || !run || (mode !== 'play' && mode !== 'between')) return;
+    releaseAll();
+    if (run.state !== 'cleared') run.truckNo++;   // a cleared lesson has already moved on
+    if (run.truckNo > TUT.LESSONS.length) { showDone(); return; }
+    run.state = 'idle';
+    mode = 'play';
+    L.startTruck(run);
+    onEvents(L.takeEvents(run));
+  }
+  function showDone() {
+    mode = 'over';
+    setControls(false);
+    held = []; queued = [];
+    el.done.hidden = false;
+    sfx('clear');
+    say('Tutorial complete. You are cleared to drive.');
+    setTimeout(function () { el.doneStart.focus(); }, 300);
+  }
+
+  // The coach's next tip, from what the forklift is facing right now. Hazards first.
+  function coachStep() {
+    var tr = run.truck, lv = tr.lv, p = tr.pose, d = L.DIRS[p.dir], w = words();
+    var ahead = L.cellAt(lv, p.x + d[0], p.y + d[1]);
+    if (run.state === 'cleared') return 'Lesson cleared!';
+    if (lv.walkers.some(function (k) { return k.alert <= 0 && Math.abs(k.x - p.x) + Math.abs(k.y - p.y) <= 3; }))
+      return 'Coworker close! Press ' + w.honk + ' now.';
+    if (ahead && ahead.door >= 0 && !lv.doors[ahead.door].open) return 'The door is shut. Wait here for it to open.';
+    if (ahead && ahead.jack) return ahead.route ? 'Jack in the way. Wait for it to roll on, or go around.' : 'Pallet jack in the way. Drive around it.';
+    if (tr.carry == null) {
+      if (ahead && ahead.k !== 'R' && ahead.stack.length) {
+        var need = ahead.stack.length - 1;
+        if (p.fork === need) return 'Lined up! ' + w.into + ' to slide the forks in and pick it up.';
+        if (p.fork < need) return 'Two stacked: raise the forks to level ' + need + ' with ' + w.up + ' to take the top one.';
+        return 'Lower the forks with ' + w.down + ' to reach it.';
+      }
+      return 'Drive to a pallet on the floor and face it.';
+    }
+    var load = lv.pallets[tr.top != null ? tr.top : tr.carry], code = (origins[load.origin] || {}).code;
+    var r = L.poseStep(lv, p, 'down', tr.carry, false, tr.top);
+    if (r.kind === 'drop' && r.into === 'rack') return 'Green box: it fits! ' + w.down + ' sets it down.';
+    if (r.kind === 'wrong') return 'Red box: wrong bay! This pallet goes in ' + code + '.';
+    if (ahead && ahead.k === 'R') {
+      if (ahead.origin !== load.origin) return 'This bay is ' + (origins[ahead.origin] || {}).code + '. Find ' + code + '.';
+      if (ahead.slots[1] != null && ahead.slots[2] != null && ahead.slots[3] != null) return 'This shelf is full. Try the one next to it.';
+      if (p.fork === 0) return 'Right bay. Raise the forks to a shelf with ' + w.up + '.';
+      return 'That level is taken. ' + w.up + ' or ' + w.down + ' to a free one.';
+    }
+    return 'Got it! Take it to a shelf marked ' + code + ' (same color) and face it.';
+  }
+
+  // ---- steering choice ----
+  function setSteer(v) {
+    steer = v;
+    try { localStorage.setItem('dock.steer', v); } catch (e) { /* private mode */ }
+    el.pad.classList.toggle('swipe-on', v === 'swipe');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-steer]'), function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-steer') === v));
+    });
+    el.how.textContent = (v === 'swipe' ? 'Swipe the way you want to go: the forklift turns to face it, and keeps driving while you hold.'
+      : '\u25B2\u25BC drive \u00B7 \u25C0\u25B6 turn.') + ' Forks \u25B2\u25BC lift and lower.';
+    if (tutorial && run) el.coachIntro.textContent = fill(TUT.LESSONS[Math.min(run.truckNo, TUT.LESSONS.length) - 1].intro);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-steer]'), function (b) {
+    b.addEventListener('click', function () { setSteer(b.getAttribute('data-steer')); });
+  });
+  setSteer(steer);
+
   function setControls(on) { buttons.forEach(function (b) { b.disabled = !on; b.classList.remove('on'); }); }
 
   function hud() {
     if (!run) return;
+    if (tutorial) { setText(el.coachStep, coachStep()); return; }
     var tr = run.truck, left = Math.max(0, Math.ceil(tr.limit - tr.time));
     el.points.textContent = fmt(run.score);
     el.time.textContent = run.state === 'prep' ? tr.limit : left;
@@ -326,14 +443,67 @@
   document.addEventListener('visibilitychange', function () { if (document.hidden) releaseAll(); });
   el.start.addEventListener('click', startRun);
   el.again.addEventListener('click', startRun);
+  el.tutorial.addEventListener('click', function () { startTutorial(1); });
+  el.doneStart.addEventListener('click', startRun);
+  el.doneAgain.addEventListener('click', function () { startTutorial(1); });
+  el.skip.addEventListener('click', skipLesson);
 
+  // A swipe is a screen direction ('go0' up, 'go1' right, 'go2' down, 'go3' left). Already facing it: drive forward.
+  // Otherwise turn toward it (two turns for a U-turn), so holding a swipe turns, then keeps driving that way.
+  function resolve(a) {
+    var diff = (+a.charAt(2) - run.truck.pose.dir + 4) % 4;
+    return diff === 0 ? 'fwd' : diff === 3 ? 'left' : 'right';
+  }
+  function isGo(a) { return a.charAt(0) === 'g'; }
   // The next action to try: a queued tap first, otherwise a held button that repeats.
   function nextAction() {
-    if (queued.length) return queued.shift();
+    goTurn = false;
+    var a;
+    if (queued.length) {
+      a = queued.shift();
+      if (!isGo(a)) return a;
+      if ((+a.charAt(2) - run.truck.pose.dir + 4) % 4 === 2) queued.unshift(a);   // a quick swipe back finishes its U-turn
+      goTurn = true;
+      return resolve(a);
+    }
     if (stopRepeat || !held.length) return null;
-    var a = held[held.length - 1];
+    a = held[held.length - 1];
+    if (isGo(a)) { goTurn = true; return resolve(a); }
     return REPEAT[a] ? a : null;
   }
+
+  // Swipe pad and the warehouse itself: a drag of 16 px picks a direction; changing direction mid-drag steers again.
+  function bindSwipe(node) {
+    var id = null, sx = 0, sy = 0, dir = -1;
+    node.addEventListener('pointerdown', function (e) {
+      if (steer !== 'swipe' || mode !== 'play') return;
+      e.preventDefault();
+      id = e.pointerId; sx = e.clientX; sy = e.clientY; dir = -1;
+      try { node.setPointerCapture(id); } catch (err) { /* older browsers */ }
+      el.swipe.classList.add('on');
+    });
+    node.addEventListener('pointermove', function (e) {
+      if (e.pointerId !== id) return;
+      var dx = e.clientX - sx, dy = e.clientY - sy;
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 16) return;
+      var nd = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0);
+      sx = e.clientX; sy = e.clientY;
+      if (nd === dir) return;
+      if (dir >= 0) release('go' + dir);
+      dir = nd;
+      press('go' + nd);
+    });
+    function end(e) {
+      if (e.pointerId !== id) return;
+      if (dir >= 0) release('go' + dir);
+      id = null; dir = -1;
+      el.swipe.classList.remove('on');
+    }
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (ev) { node.addEventListener(ev, end); });
+    node.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  }
+  bindSwipe(el.swipe);
+  bindSwipe(canvas);
 
   // ---- update ----
   function update(dt) {
@@ -355,7 +525,7 @@
             var from = tr.pose, r = L.act(run, a);
             if (r) {
               anim = { kind: r.kind, from: from, to: tr.pose, dur: tr.busy, action: a };
-              if (r.kind !== 'move' && r.kind !== 'fork') stopRepeat = true;   // after a pick, drop or bump, let go first
+              if (r.kind !== 'move' && r.kind !== 'fork' && !(r.kind === 'turn' && goTurn)) stopRepeat = true;   // after a pick, drop or bump, let go first
             }
           }
         }
@@ -371,7 +541,8 @@
     } else if (mode === 'between') {
       betweenT -= dt;
       if (betweenT <= 0) {
-        if (run.state === 'cleared' && SHIFT && run.trucksCleared >= SHIFT) {
+        if (tutorial && run.truckNo > TUT.LESSONS.length) showDone();
+        else if (run.state === 'cleared' && SHIFT && run.trucksCleared >= SHIFT) {
           overGood = true;
           overLine = 'Shift complete! All ' + SHIFT + ' trucks unloaded.';
           showOver();
@@ -639,10 +810,12 @@
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+  if (LESSON) startTutorial(Math.min(LESSON, TUT.LESSONS.length));
 
   // Test hook (drive and read the game from automated checks)
   window.__dock = {
-    start: startRun,
+    start: startRun, tutorial: startTutorial, skip: skipLesson, coach: function () { return el.coachStep.textContent; },
+    swipe: function (n) { press('go' + n); release('go' + n); }, steer: setSteer,
     advance: function (s) { while (s > 0) { var d = Math.min(0.05, s); update(d); s -= d; } draw(); },
     tap: function (a) { press(a); release(a); },
     honk: function () { press('honk'); },
