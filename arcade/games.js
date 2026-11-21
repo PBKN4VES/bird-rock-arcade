@@ -1,5 +1,6 @@
 // Bird Rock Arcade: the one list of cabinets. To add a game, add an entry here.
 // href is relative to the arcade page. bestKey is the game's own localStorage key for its best score.
+// noBoard: true means the game does not send scores yet: its cabinet shows no TOP 100 link and the Top 100 page has no tab for it.
 // shot is a screenshot of the real game (in shots/) shown on the cabinet screen; shotPos picks which
 // part stays visible when the screen crops it to 5:4 (CSS object-position). shotFit: 'contain' shows
 // the whole picture with dark bars instead of cropping (for wide shots with text at the edges).
@@ -33,5 +34,12 @@ window.ARCADE_GAMES = [
     blurb: 'Hold to heat the roaster. Let go at the perfect temp.',
     href: '../roast2/', bestKey: 'roast2.bestScore', color: '#c8553d',
     shot: 'shots/roast2.png', shotPos: '50% 0%'
+  },
+  {
+    id: 'picker', title: 'Cherry Picker', sub: '',
+    blurb: 'Tap the cherries when they are red. Shoo the birds.',
+    href: '../picker/', bestKey: 'picker.bestScore', color: '#e0503f',
+    shot: 'shots/picker.png', shotPos: '50% 30%',
+    noBoard: true   // new and in testing: it does not send scores to the leaderboard yet, so no TOP 3 or Top 100 for it
   }
 ];

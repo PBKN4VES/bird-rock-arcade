@@ -22,7 +22,7 @@ h1 {
 /* The room: a back wall fading into a floor. */
 .floor {
   list-style: none; margin: 0; padding: 18px 12px 22px;
-  /* Centered rows, so an odd cabinet out sits in the middle (five games: 2+2+1 on phones, 3+2, then 5 across). */
+  /* Centered rows, so an odd cabinet out sits in the middle (six games: 2+2+2 on phones, then 3+3). */
   display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 12px;
   --cols: 2; --gapx: 12px;
   background:
@@ -100,10 +100,7 @@ h1 {
   .blurb, .best { font-size: 8px; }
   .lede { font-size: 11px; }
 }
-@media (min-width: 960px) {
-  .floor { --cols: 5; --gapx: 14px; gap: 22px 14px; padding: 28px 16px 30px; }
-  .marquee { font-size: 9px; }
-}
+/* Six cabinets stay 3 across on wide screens (3+3); five across would leave one alone on a second row. */
 
 @media (prefers-reduced-motion: reduce) {
   .cab:hover, .cab:focus-visible { transform: none; }

@@ -1,0 +1,41 @@
+/* Cherry Picker: only what differs from ../style.css (colors, font and cards come from there). */
+
+/* Two toggles in the header; let them wrap under the title on a very narrow phone. */
+.top { flex-wrap: wrap; }
+.toggles { display: flex; gap: 6px; }
+#contrast {
+  font: inherit; font-size: 8px; color: var(--cream); background: transparent;
+  border: 2px solid var(--blue); padding: 6px 8px; cursor: pointer;
+}
+#contrast[aria-pressed="true"] { background: var(--blue); color: var(--ink); }
+#sound, #contrast { font-size: 7px; padding: 6px; }
+
+/* Four HUD cells: Score, Best, Time, Combo. */
+.hud { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.hud div { padding: 4px 4px; }
+.hud b { display: block; min-height: 22px; font-size: 13px; }
+.combo { color: var(--cream); }
+.combo.c3 { color: var(--gold); }
+.combo.c5 { color: var(--red); }
+
+/* The canvas is 240 x 320 (portrait). Its width is capped so the whole page fits a short phone screen with no scrolling
+   (width = 0.75 x height). */
+.field { width: min(100%, calc((100dvh - 190px) * 0.75)); min-width: 200px; margin: 0 auto; }
+
+.over-line { font-size: 11px; color: var(--gold); line-height: 1.5; }
+.over-line:empty { display: none; }
+.review-stats[hidden] { display: none; }
+
+/* Tapping must not scroll, zoom, select text, or open a long-press menu. */
+#c, .hint {
+  touch-action: none;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+}
+#c { cursor: pointer; }
+
+.banner { top: 18%; font-size: 12px; }
+.banner.bad { color: var(--red); }
+
+/* High contrast: the page frame gets brighter too (the white ring around red cherries is drawn in game.js). */
+body.contrast .stage { border-color: #fff; }

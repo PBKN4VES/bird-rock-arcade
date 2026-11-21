@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Cherry Picker | Bird Rock Coffee Roasters</title>
+  <meta name="description" content="A 60-second harvest day on a coffee hillside. Tap the red cherries at just the right moment, and shoo the bird.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="style.css?v=p3">
+</head>
+<body>
+  <main id="app">
+    <header class="top">
+      <h1>Cherry Picker</h1>
+      <div class="toggles">
+        <button id="sound" type="button" aria-pressed="true">Sound: on</button>
+        <button id="contrast" type="button" aria-pressed="false">High contrast: off</button>
+      </div>
+    </header>
+
+    <section class="hud" aria-label="Score and time">
+      <div><span>Score</span><b id="points">0</b></div>
+      <div><span>Best</span><b id="best">0</b></div>
+      <div><span>Time</span><b id="time">60</b></div>
+      <div><span>Combo</span><b id="combo" class="combo" aria-label="No combo"></b></div>
+    </section>
+
+    <div class="field">
+      <div class="stage">
+        <canvas id="c" width="240" height="320" aria-label="A coffee hillside with three rows of branches at 1,900, 1,500 and 1,100 metres. Tap red cherries to pick them, and tap the bird to shoo it away."></canvas>
+        <div id="banner" class="banner" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <p id="hint" class="hint">Tap or click RED cherries. Tap the bird to shoo it. Keys: arrows, Space, B.</p>
+    <p id="status" class="sr-only" aria-live="polite"></p>
+  </main>
+
+  <!-- Title screen -->
+  <div id="title" class="overlay" role="dialog" aria-modal="true" aria-labelledby="title-h">
+    <div class="card">
+      <img class="van" src="../assets/Van_Blue.png" alt="Bird Rock van" width="120" height="120">
+      <h2 id="title-h">Cherry Picker</h2>
+      <p>You have 60 seconds. Tap the cherries when they are RED. Green, yellow and orange ones cost you points, and so do overripe ones.</p>
+      <p>Higher up, cherries ripen slower and are worth more, but they don't stay ripe long.</p>
+      <p>A bird will land and walk toward a red cherry. Tap it to shoo it off. Later birds take two taps.</p>
+      <button id="start" class="btn" type="button">Start picking</button>
+    </div>
+  </div>
+
+  <!-- Harvest over -->
+  <div id="over" class="overlay" role="dialog" aria-modal="true" aria-labelledby="over-h" hidden>
+    <div class="card review">
+      <p class="eyebrow">Harvest over!</p>
+      <h2 id="over-h" class="sr-only">Harvest over: your score</h2>
+      <p id="new-best" class="new-best" hidden>New best!</p>
+      <div class="score"><span id="score">0</span></div>
+      <p id="rank" class="over-line"></p>
+      <p id="review-stats" class="review-stats"></p>
+      <p id="practice" class="review-stats" hidden>Practice run</p>
+      <button id="again" class="btn" type="button">Pick again</button>
+    </div>
+  </div>
+
+  <script src="logic.js?v=p11"></script>
+  <script src="caw.js?v=p4"></script>
+  <script src="game.js?v=p9"></script>
+</body>
+</html>
