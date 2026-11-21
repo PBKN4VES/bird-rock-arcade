@@ -6,6 +6,13 @@
 // the whole picture with dark bars instead of cropping (for wide shots with text at the edges).
 window.ARCADE_GAMES = [
   {
+    id: 'picker', title: 'Cherry Picker', sub: '',
+    blurb: 'Tap the cherries when they are red. Shoo the birds.',
+    href: '../picker/', bestKey: 'picker.bestScore', color: '#e0503f',
+    shot: 'shots/picker.png', shotPos: '50% 30%',
+    noBoard: true   // new and in testing: it does not send scores to the leaderboard yet, so no TOP 3 or Top 100 for it
+  },
+  {
     id: 'fill', title: 'Fill Master 3000', sub: '',
     blurb: 'Bags ride the belt. Pour exactly 10 oz.',
     href: '../fill/', bestKey: 'fill3000.bestScore', color: '#4298B5',
@@ -34,12 +41,5 @@ window.ARCADE_GAMES = [
     blurb: 'Hold to heat the roaster. Let go at the perfect temp.',
     href: '../roast2/', bestKey: 'roast2.bestScore', color: '#c8553d',
     shot: 'shots/roast2.png', shotPos: '50% 0%'
-  },
-  {
-    id: 'picker', title: 'Cherry Picker', sub: '',
-    blurb: 'Tap the cherries when they are red. Shoo the birds.',
-    href: '../picker/', bestKey: 'picker.bestScore', color: '#e0503f',
-    shot: 'shots/picker.png', shotPos: '50% 30%',
-    noBoard: true   // new and in testing: it does not send scores to the leaderboard yet, so no TOP 3 or Top 100 for it
   }
 ];
