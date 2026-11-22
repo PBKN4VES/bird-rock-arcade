@@ -1,4 +1,4 @@
-// Bird Rock Arcade leaderboard, browser side. One file shared by the four games and the arcade hub.
+// Bird Rock Arcade leaderboard, browser side. One file shared by every game and the arcade hub.
 // The server is a Google Apps Script web app (../leaderboard/Code.gs, outside site/). Its address is in
 // leaderboard-config.js; while that is blank, everything here stays switched off and the games play as before.
 //

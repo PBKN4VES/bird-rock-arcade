@@ -14,7 +14,9 @@
     pourover: { title: 'Pour-Over Power Hour', color: '#5b8c5a' },
     flappy:   { title: 'Flappy Grinder',       color: '#8a5fb0' },
     dock:     { title: 'Forklift Frenzy',      color: '#d9a520' },
-    roast2:   { title: 'Roast Master 5000',    color: '#c8553d' }
+    roast2:   { title: 'Roast Master 5000',    color: '#c8553d' },
+    cherry:   { title: 'Cherry Catch',         color: '#c0283a' },
+    picker:   { title: 'Cherry Picker',        color: '#3f7d44' }
   };
   var INK = '#0f1c26', WALL = '#173547', BLUE = '#4298B5', BLUE_LIGHT = '#9ad0e3', CREAM = '#f6edd6', GOLD = '#f2c744';
 

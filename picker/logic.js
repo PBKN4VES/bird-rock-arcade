@@ -236,13 +236,13 @@
     var tier = null, bestD = Infinity, i;
     var taken = w.flock.map(function (o) { return o.tier; });            // one bird per branch
     var free = TIERS.filter(function (t) { return taken.indexOf(t.id) < 0; });
-    for (i = 0; i < w.slots.length; i++) {          // the free tier whose red is closest to either end of its branch
+    for (i = 0; i < w.slots.length; i++) {          // the free tier whose orange cherry is closest to either end of its branch
       var sl = w.slots[i];
-      if (taken.indexOf(sl.tier) >= 0 || !sl.cherry || stageAt(sl.cherry, w.t) !== 'red') continue;
+      if (taken.indexOf(sl.tier) >= 0 || !sl.cherry || stageAt(sl.cherry, w.t) !== 'orange') continue;
       var d = Math.min(SLOT_S[i], PATH_LEN[sl.tier] - SLOT_S[i]);
       if (d < bestD) { bestD = d; tier = sl.tier; }
     }
-    if (!tier) tier = free[Math.floor(w.rng() * free.length) % free.length].id;
+    if (!tier) return;                              // no orange cherry on a free branch: wait for one. The bird lands as a cherry is about to turn red (Roger, 2026-11-21), never with nothing coming
     var left = w.rng() < 0.5;
     var nb = { id: w.nextBirdId++, state: 'land', tier: tier, s: left ? 0 : PATH_LEN[tier], dir: left ? 1 : -1, target: -1, onBranch: 0, stateT: 0, waited: 0,
                needs: w.t >= BIRD_TOUGH_FROM ? 2 : 1, hits: 0 };

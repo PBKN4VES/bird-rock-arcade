@@ -1,0 +1,56 @@
+/* Cherry Catch: only what differs from ../style.css (colors, font and cards come from there). */
+
+/* The header holds two toggles now; let them wrap under the title on a very narrow phone. */
+.top { flex-wrap: wrap; }
+.toggles { display: flex; gap: 6px; }
+#contrast {
+  font: inherit; font-size: 8px; color: var(--cream); background: transparent;
+  border: 2px solid var(--blue); padding: 6px 8px; cursor: pointer;
+}
+#contrast[aria-pressed="true"] { background: var(--blue); color: var(--ink); }
+#sound, #contrast { font-size: 7px; padding: 6px; }
+
+.hud { grid-template-columns: repeat(3, 1fr); }
+.hud b { display: block; min-height: 22px; }
+.combo { color: var(--gold); font-size: 9px; margin-left: 4px; }
+.combo:empty { display: none; }
+
+/* Lives: little cherries, filled while you have the life and hollow when it is gone. */
+.hud .lives { display: flex; justify-content: center; align-items: center; gap: 5px; padding-top: 4px; }
+.life { display: block; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--red); background: transparent; }
+.life.on { background: var(--red); box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.55); }
+
+/* The play area plus the touch strip. Its width is capped so the canvas never pushes the strip off a short phone screen
+   (240 x 320 portrait: width = 0.75 x height). */
+.field { width: min(100%, calc((100dvh - 266px) * 0.75)); min-width: 200px; margin: 0 auto; display: flex; flex-direction: column; gap: 6px; }
+
+.over-line { font-size: 10px; color: var(--gold); line-height: 1.5; }
+.over-line:empty { display: none; }
+
+/* The burlap sack on the end card: drawn at 72 x 84 real pixels, shown 2x bigger with hard edges so it stays blocky. */
+.bag { width: 144px; height: 168px; margin: 4px auto 0; display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
+.kilos { font-size: 10px; color: var(--cream); line-height: 1.5; margin: 2px 0 6px; }
+@media (max-height: 700px) { .bag { width: 108px; height: 126px; } }
+/* With the top 10 and SHARE button added, the end card can be taller than a phone screen. The overlay centers it with flex,
+   which would cut off the top of a too-tall card where no scroll can reach it; auto margins keep it centered when it fits
+   and start it at the top (scrollable) when it does not. */
+#over .card { margin: auto; }
+
+/* Dragging must not scroll, zoom, select text, or open a long-press menu. */
+#c, #pad, .hint {
+  touch-action: none;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+}
+.pad {
+  height: 48px; display: flex; align-items: center; justify-content: center;
+  background: var(--wall); border: 3px dashed var(--blue); color: var(--blue-light); font-size: 8px; cursor: ew-resize;
+}
+.pad.on { border-style: solid; color: var(--cream); }
+
+.banner { top: 18%; font-size: 14px; }
+.banner.bad { color: var(--red); }
+
+/* High contrast: the page frame gets brighter too (the white ring around red cherries is drawn in game.js). */
+body.contrast .stage { border-color: #fff; }
+body.contrast .pad { border-color: #fff; color: #fff; }

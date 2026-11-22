@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Cherry Catch | Bird Rock Coffee Roasters</title>
+  <meta name="description" content="Catch only the ripe red coffee cherries in your basket. Watch out for the bird!">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="style.css?v=c9">
+</head>
+<body>
+  <main id="app">
+    <header class="top">
+      <h1>Cherry Catch</h1>
+      <div class="toggles">
+        <button id="sound" type="button" aria-pressed="true">Sound: on</button>
+        <button id="contrast" type="button" aria-pressed="false">Contrast: off</button>
+      </div>
+    </header>
+
+    <section class="hud" aria-label="Score">
+      <div><span>Score</span><b><span id="points">0</span><span id="combo" class="combo" aria-hidden="true"></span></b></div>
+      <div><span>Best</span><b id="best">0</b></div>
+      <div><span>Lives</span><b id="lives" class="lives" aria-label="3 lives"><i class="life on"></i><i class="life on"></i><i class="life on"></i></b></div>
+    </section>
+
+    <div class="field">
+      <div class="stage">
+        <canvas id="c" width="240" height="320" aria-label="Cherries falling toward a wicker basket. Catch the red ones, let the green, yellow and orange ones go, and dodge the rocks and bats, and watch out for the bird."></canvas>
+        <div id="banner" class="banner" aria-hidden="true"></div>
+      </div>
+      <!-- Touch strip: drag here to slide the basket on a phone without covering the cherries -->
+      <div id="pad" class="pad">Drag here to move</div>
+    </div>
+
+    <p id="hint" class="hint">Move your mouse, drag, or use arrow keys. Catch only RED cherries. When the bird locks onto a cherry (a dotted line appears), tap it or press Space to scare it. Later it takes more than one. Dodge rocks and bats. Grab the shiny special items.</p>
+    <p id="status" class="sr-only" aria-live="polite"></p>
+  </main>
+
+  <!-- Title screen -->
+  <div id="title" class="overlay" role="dialog" aria-labelledby="title-h">
+    <div class="card">
+      <img class="van" src="../assets/Van_Blue.png" alt="Bird Rock van" width="120" height="120">
+      <h2 id="title-h">Cherry Catch</h2>
+      <p>Coffee cherries fall from the trees. Slide your basket to catch the ripe RED ones.</p>
+      <p>Green, yellow and orange are not ready, and rocks and bats do not belong in a basket: catch one and you lose a life. A drifting leaf only breaks your combo. Three lives and the harvest is over.</p>
+      <p>Watch for the bird! When a dotted line shows it has picked a cherry, tap it or press Space to shoo it away. Later on it comes back, so shoo it again. If it steals a cherry, you lose a life.</p>
+      <p>Catch the shiny items for help: a coffee cup slows things down, a scarecrow keeps the bird away, sunshine ripens every cherry, and a golden cherry gives a life back.</p>
+      <button id="start" class="btn" type="button">Start picking</button>
+    </div>
+  </div>
+
+  <!-- Game over -->
+  <div id="over" class="overlay" role="dialog" aria-labelledby="over-h" hidden>
+    <div class="card review">
+      <p class="eyebrow">Overall Score</p>
+      <h2 id="over-h" class="sr-only">Game over: your overall score</h2>
+      <p id="new-best" class="new-best" hidden>New best!</p>
+      <div class="score"><span id="score">0</span></div>
+      <p id="over-line" class="over-line"></p>
+      <p id="rank" class="review-stats"></p>
+      <canvas id="bag" class="bag" width="72" height="84" aria-hidden="true"></canvas>
+      <p id="kilos" class="kilos"></p>
+      <p id="review-stats" class="review-stats"></p>
+      <div id="lb" class="lb" hidden></div>
+      <div id="share" class="share" hidden></div>
+      <button id="again" class="btn" type="button">Pick again</button>
+    </div>
+  </div>
+
+  <script src="../leaderboard-config.js"></script>
+  <script src="../leaderboard.js"></script>
+  <script src="../share.js"></script>
+  <script src="logic.js?v=c9"></script>
+  <script src="game.js?v=c9"></script>
+</body>
+</html>

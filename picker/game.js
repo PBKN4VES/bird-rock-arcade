@@ -271,8 +271,9 @@
     el.again.disabled = true;
     el.over.hidden = false;
     setCardOpen(true); clearHover();
-    // Later, when Picker joins the Arcade: ShareCard.show(...) and Leaderboard.show(...) go here, as in Flappy's showOver().
-    setTimeout(function () { el.again.disabled = false; el.again.focus(); }, 500);   // stops a stray tap from skipping the card
+    if (window.ShareCard) ShareCard.show({ game: 'picker', score: world.score, line: rank, practice: practice, mount: document.getElementById('share') });
+    if (window.Leaderboard) Leaderboard.show({ game: 'picker', score: world.score, practice: practice, mount: document.getElementById('lb') });
+    setTimeout(function () { el.again.disabled = false; if (!(window.Leaderboard && Leaderboard.typing())) el.again.focus(); }, 500);   // stops a stray tap from skipping the card
     hud();
     say('Harvest over. Score ' + world.score + '. ' + rank + '. ' + el.stats.textContent);
   }

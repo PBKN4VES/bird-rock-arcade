@@ -2,7 +2,7 @@
 (function () {
   var L = window.ScoresLogic;
   var LB = window.Leaderboard;
-  var GAMES = (window.ARCADE_GAMES || []).filter(function (g) { return !g.noBoard; });   // games that send scores
+  var GAMES = window.ARCADE_GAMES || [];
   var tabs = document.getElementById('tabs');
   var rows = document.getElementById('rows');
   var title = document.getElementById('board-title');

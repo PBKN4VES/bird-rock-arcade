@@ -25,6 +25,10 @@
 .over-line { font-size: 11px; color: var(--gold); line-height: 1.5; }
 .over-line:empty { display: none; }
 .review-stats[hidden] { display: none; }
+/* With the top 10 and SHARE button added, the end card can be taller than a short phone screen. The overlay centers it with flex,
+   which cuts off the top of a too-tall card where no scroll can reach it; auto margins keep it centered when it fits and
+   start it at the top (scrollable) when it does not. */
+#over .card { margin: auto; }
 
 /* Tapping must not scroll, zoom, select text, or open a long-press menu. */
 #c, .hint {
