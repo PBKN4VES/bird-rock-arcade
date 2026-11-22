@@ -72,7 +72,9 @@
     });
     panel.appendChild(ol);
     var note = L.panelNote(status, rows);
-    if (note) panel.appendChild(el('p', 'soon', note));
+    // Always one note line (blank and invisible when there is nothing to say), so every Top 3 panel is the same height.
+    var line = el('p', note ? 'soon' : 'soon blank', note || '\u00a0');
+    panel.appendChild(line);
   }
 
   var LB = window.Leaderboard;

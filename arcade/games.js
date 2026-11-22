@@ -5,6 +5,18 @@
 // the whole picture with dark bars instead of cropping (for wide shots with text at the edges).
 window.ARCADE_GAMES = [
   {
+    id: 'cherry', title: 'Cherry Catch', sub: '',
+    blurb: 'Slide the basket. Catch only the ripe red cherries.',
+    href: '../cherry/', bestKey: 'cherry.bestScore', color: '#c0283a',
+    shot: 'shots/cherry.png', shotPos: '50% 50%'
+  },
+  {
+    id: 'picker', title: 'Cherry Picker', sub: '',
+    blurb: 'Tap the red cherries at just the right moment.',
+    href: '../picker/', bestKey: 'picker.bestScore', color: '#3f7d44',
+    shot: 'shots/picker.png', shotPos: '50% 50%'
+  },
+  {
     id: 'fill', title: 'Fill Master 3000', sub: '',
     blurb: 'Bags ride the belt. Pour exactly 10 oz.',
     href: '../fill/', bestKey: 'fill3000.bestScore', color: '#4298B5',
@@ -33,17 +45,5 @@ window.ARCADE_GAMES = [
     blurb: 'Hold to heat the roaster. Let go at the perfect temp.',
     href: '../roast2/', bestKey: 'roast2.bestScore', color: '#c8553d',
     shot: 'shots/roast2.png', shotPos: '50% 0%'
-  },
-  {
-    id: 'cherry', title: 'Cherry Catch', sub: '',
-    blurb: 'Slide the basket. Catch only the ripe red cherries.',
-    href: '../cherry/', bestKey: 'cherry.bestScore', color: '#c0283a',
-    shot: 'shots/cherry.png', shotPos: '50% 50%'
-  },
-  {
-    id: 'picker', title: 'Cherry Picker', sub: '',
-    blurb: 'Tap the red cherries at just the right moment.',
-    href: '../picker/', bestKey: 'picker.bestScore', color: '#3f7d44',
-    shot: 'shots/picker.png', shotPos: '50% 50%'
   }
 ];
