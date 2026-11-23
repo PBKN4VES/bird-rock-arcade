@@ -20,7 +20,7 @@
 
   var ROCK = { base: '#8a8f94', hi: '#b4b9bd', shade: '#5c6166', hatch: '#454a4e' };
   var BAT = { body: '#3d3150', dark: '#2b2236', eye: '#ff6a55' };
-  var POWER_COLOR = { cup: '#7fb6ff', scarecrow: '#e2ae72', sun: '#f2c744' };
+  var POWER_COLOR = { bullet: '#39ff6a', scarecrow: '#e2ae72', sun: '#f2c744', tiny: '#c06be0', magnet: '#e0503f', umbrella: THEME.blue, net: '#c98b4f' };
 
   var W = L.W, H = L.H, BY = L.BASKET_Y;
   var canvas = document.getElementById('c');
@@ -36,7 +36,7 @@
   // ---- feel-test switches (read once at load). Any of them makes the run "practice": no best score is saved. ----
   // ?lives=5  ?speed=1.2 (scales fall speed)  ?birds=0  ?miss=3 (every third missed red costs a life)  ?t=60 (start 60 s into the ramp)
   // ?items=0 (the core game: no rocks, bats, leaves or power-ups)  ?rocks=0  ?bats=0  ?leaves=0
-  // ?vary=0.3 (fix the random fall-speed spread at +/-30%; 0 = every item falls at the same speed)  ?power=cup|scarecrow|sun (the first falling pickup is that one)  ?golden=1 (start with 2 lives; a golden cherry comes first)
+  // ?vary=0.3 (fix the random fall-speed spread at +/-30%; 0 = every item falls at the same speed)  ?power=bullet|scarecrow|sun|tiny|magnet|umbrella|net (the first falling pickup is that one)  ?golden=1 (start with 2 lives; a golden cherry comes first)
   function readSwitch(name, lo, hi) {
     var m = new RegExp('[?&]' + name + '=(-?[0-9.]+)').exec(window.location.search);
     if (!m) return null;
@@ -51,7 +51,7 @@
     lives: readSwitch('lives', 1, 99), speed: readSwitch('speed', 0.3, 3), birds: readSwitch('birds', 0, 1),
     miss: readSwitch('miss', 0, 99), t: readSwitch('t', 0, 600),
     items: readSwitch('items', 0, 1), rocks: readSwitch('rocks', 0, 1), bats: readSwitch('bats', 0, 1), leaves: readSwitch('leaves', 0, 1),
-    vary: readSwitch('vary', 0, 0.6), golden: readSwitch('golden', 0, 1), power: readWord('power', ['cup', 'scarecrow', 'sun'])
+    vary: readSwitch('vary', 0, 0.6), golden: readSwitch('golden', 0, 1), power: readWord('power', ['bullet', 'scarecrow', 'sun', 'tiny', 'magnet', 'umbrella', 'net'])
   };
   var practice = false;
   for (var k in SWITCH) if (SWITCH[k] !== null) practice = true;
@@ -65,6 +65,8 @@
   var soundOn = true, ac = null;   // on by default; the browser only starts audio after the first tap (Start)
   var contrast = readContrast();
   var bannerTimeout = 0;
+  var flutterT = 0;                // seconds until the next bat wing beat sounds
+  var drawW = L.BASKET_W;          // the basket's drawn width, easing toward the real one
   var steerId = null;              // the pointer that is steering the basket, if any
   var keyL = false, keyR = false, keyWas = false;
 
@@ -120,6 +122,17 @@
     var s = ac.createBufferSource(), g = ac.createGain(); s.buffer = buf; g.gain.value = vol;
     s.connect(g); g.connect(ac.destination); s.start();
   }
+  // Bat wings: two quick soft flaps of filtered air, one pair per wing beat. Made-up, no file needed.
+  function flutter() {
+    if (!ac) return;
+    [0, 0.07].forEach(function (delay) {
+      var n = Math.floor(ac.sampleRate * 0.06), buf = ac.createBuffer(1, n, ac.sampleRate), d = buf.getChannelData(0), i;
+      for (i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * i / n);
+      var s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+      s.buffer = buf; f.type = 'bandpass'; f.frequency.value = 700 + Math.random() * 300; f.Q.value = 0.8; g.gain.value = 0.22;
+      s.connect(f); f.connect(g); g.connect(ac.destination); s.start(ac.currentTime + delay);
+    });
+  }
   var CHIME = [523, 587, 659, 784, 880];   // a pentatonic climb: each red in a row rings higher
   function sfx(name, arg) {
     if (!soundOn) return;
@@ -135,6 +148,9 @@
     else if (name === 'caw') { caw(); }
     else if (name === 'scare') { tone(1200, 0.06, 'square', 0.05); tone(1700, 0.1, 'square', 0.05, 0.05); }
     else if (name === 'power') { [659, 784, 988, 1319].forEach(function (f3, i) { tone(f3, 0.1, 'square', 0.05, i * 0.07); }); }
+    else if (name === 'shrink') { tone(1100, 0.22, 'triangle', 0.06, 0, 180); tone(1500, 0.06, 'square', 0.04, 0.2); }
+    else if (name === 'flutter') { flutter(); }
+    else if (name === 'bounce') { tone(500, 0.05, 'triangle', 0.07); tone(900, 0.09, 'triangle', 0.06, 0.04); }
     else if (name === 'powerEnd') { tone(660, 0.08, 'triangle', 0.04); tone(440, 0.12, 'triangle', 0.04, 0.08); }
     else if (name === 'life') { [523, 659, 784, 1047].forEach(function (f4, i) { tone(f4, 0.12, 'triangle', 0.07, i * 0.08); }); }
     else if (name === 'leaf') { tone(220, 0.1, 'triangle', 0.04, 0, 120); }
@@ -289,7 +305,7 @@
     if (SWITCH.golden === 1 && SWITCH.lives === null) world.lives = 2;   // a golden cherry is only welcome below full lives
     startBest = best;
     particles = []; floaters = []; shake = 0; flash = 0; hurt = 0; bounce = 0; warnFlash = 0; readyT = 0;
-    steerId = null; keyL = keyR = keyWas = false; pad.classList.remove('on');
+    steerId = null; keyL = keyR = keyWas = false; pad.classList.remove('on'); drawW = L.BASKET_W; flutterT = 0;
     el.title.hidden = true; el.over.hidden = true;
     state = 'running';
     sfx('start');
@@ -330,6 +346,11 @@
         if (e.livesLeft > 0) banner(e.kind === 'rock' ? 'ROCK!' : e.kind === 'bat' ? 'BAT!' : 'NOT RIPE!', true);
         say('That was ' + what + '. ' + e.livesLeft + (e.livesLeft === 1 ? ' life left.' : ' lives left.'));
         hud();
+      } else if (e.type === 'bounce') {
+        floaters.push({ x: world.basketX, y: BY - 20, text: 'BOUNCE!', life: 0.7 });
+        burst(e.x, BY - 8, 8, [THEME.blue, THEME.blueLight, e.kind === 'rock' ? ROCK.base : BAT.body]);
+        sfx('bounce');
+        say('The umbrella turned aside ' + (e.kind === 'rock' ? 'a rock.' : 'a bat.'));
       } else if (e.type === 'leaf') {
         floaters.push({ x: world.basketX, y: BY - 14, text: 'LEAF', life: 0.7 });
         burst(e.x, BY - 4, 5, [ART.leafHi, ART.leaf]);
@@ -341,8 +362,8 @@
         floaters.push({ x: world.basketX, y: BY - 14, text: L.POWER_NAMES[e.kind], life: 1.1 });
         burst(e.x, BY - 4, 12, [THEME.gold, THEME.cream, '#ffffff']);
         bounce = 0.2; flash = 0.25;
-        sfx('power');
-        say(({ cup: 'Slow motion for 5 seconds.', scarecrow: 'Scarecrow. Birds will caw and fly off instead of stealing for 10 seconds.', sun: 'Sunshine. Every cherry is ripe and missing one is free for 4 seconds.' })[e.kind]);
+        sfx(e.kind === 'tiny' ? 'shrink' : 'power');
+        say(({ bullet: 'Bullet Time. Everything slows down for 5 seconds.', scarecrow: 'Scarecrow. Birds will caw and fly off instead of stealing for 10 seconds.', sun: 'Sunshine. Every cherry is ripe and missing one is free for 4 seconds.', tiny: 'Tiny basket. Your basket is one cherry wide for 8 seconds. Harder to catch, easier to dodge.', magnet: 'Magnet. Red cherries drift toward your basket for 5 seconds.', umbrella: 'Umbrella. Rocks and bats bounce off for 6 seconds.', net: 'Cherry net. Missed red cherries stay on the ground for 5 seconds. Slide the basket over them to collect them.' })[e.kind]);
       } else if (e.type === 'powerEnd') {
         if (!e.replaced) { sfx('powerEnd'); say(L.POWER_NAMES[e.kind] + ' wore off.'); }
       } else if (e.type === 'life') {
@@ -359,7 +380,7 @@
         if (e.costsLife) { shake = Math.max(shake, 0.2); hurt = 0.35; say('Missed a red cherry. ' + e.livesLeft + ' lives left.'); }
         hud();
       } else if (e.type === 'warn') {
-        warnFlash = world.bird ? world.bird.warn : L.BIRD_WARN;
+        warnFlash = e.warn || L.BIRD_WARN;
         sfx('warn');
         say('Bird coming! Wait until it locks onto a cherry, then tap the bird or press Space.');
       } else if (e.type === 'lock') {
@@ -376,7 +397,7 @@
         say('The bird stole a red cherry and it cost a life. ' + e.livesLeft + (e.livesLeft === 1 ? ' life left.' : ' lives left.'));
         hud();
       } else if (e.type === 'scare') {
-        floaters.push({ x: world.bird ? world.bird.x : W / 2, y: world.bird ? world.bird.y + 14 : 60, text: e.by === 'scarecrow' ? 'CAW!' : e.left > 0 ? 'AGAIN!' : 'SHOO!', life: 0.7 });
+        floaters.push({ x: e.x === undefined ? W / 2 : e.x, y: e.y === undefined ? 60 : e.y + 14, text: e.by === 'scarecrow' ? 'CAW!' : e.left > 0 ? 'AGAIN!' : 'SHOO!', life: 0.7 });
         sfx(e.by === 'scarecrow' ? 'caw' : 'scare');
         say(e.by === 'scarecrow' ? 'The scarecrow scared the bird. It cawed and flew away.' : e.left > 0 ? 'The bird backed off but it is coming back. Shoo it again.' : 'You scared the bird away.');
       } else if (e.type === 'over') {
@@ -402,9 +423,9 @@
   }
 
   // ---- scaring the bird ----
-  function scare() {
+  function scare(bird) {
     if (state !== 'running') return false;
-    return L.scareBird(world);
+    return L.scareBird(world, bird);
   }
 
   // ---- input ----
@@ -425,8 +446,9 @@
         steer(p);
       } else {
         // A press up in the sky band never moves the basket; it scares the bird if one is near.
-        var b = world.bird;
-        if (b && Math.abs(p.x - b.x) <= 26 && Math.abs(p.y - b.y) <= 26) scare();
+        // With several birds, the tap goes to the nearest one within reach that can be shooed.
+        var hit = L.birdAt(world, p.x, p.y, 26);
+        if (hit) scare(hit);
       }
     });
     node.addEventListener('pointermove', function (e) {
@@ -483,6 +505,10 @@
     particles.forEach(function (p) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 400 * dt; p.life -= dt; });
     particles = particles.filter(function (p) { return p.life > 0 && p.y < H + 4; });
     clouds.forEach(function (c) { c.x += c.v * dt; if (c.x > W + 30) c.x = -40; });
+    // Bat wings beat about 4.5 times a second (see drawBat); one flutter per beat while any bat is on screen.
+    var bats = state === 'running' && world.cherries.some(function (c) { return c.kind === 'bat' && c.y > -4; });
+    if (bats) { flutterT -= dt; if (flutterT <= 0) { sfx('flutter'); flutterT = 2 / 9; } } else flutterT = 0;
+    drawW += (world.basketW - drawW) * Math.min(1, dt * 16);                  // the basket eases to its new size
 
     if (state === 'running') {
       readyT += dt;
@@ -602,14 +628,31 @@
     var x = Math.round(c.x), y = Math.round(c.y), pulse = Math.round(Math.sin(sec * 8) * 1.5), a;
     for (a = 0; a < 12; a++) rect(x + Math.cos(a * Math.PI / 6 + sec) * (13 + pulse) - 1, y + Math.sin(a * Math.PI / 6 + sec) * (13 + pulse) - 1, 2, 2, THEME.gold);
     disc(x, y, 11, ART.outline); disc(x, y, 10, '#fff3c4'); disc(x, y, 8, THEME.cream);
-    if (c.kind === 'cup') {
-      shape(x, y, [[-4, -1, 8, 7]], '#ffffff'); shape(x, y, [[4, 0, 3, 4]], '#ffffff'); rect(x - 4, y - 1, 8, 2, '#5b3b1e'); rect(x + 5, y + 1, 1, 2, THEME.cream);
-      rect(x - 2, y - 5 - Math.round(Math.sin(sec * 6)), 1, 3, '#9fb4c0'); rect(x + 1, y - 6 + Math.round(Math.sin(sec * 6)), 1, 3, '#9fb4c0');   // steam
+    if (c.kind === 'bullet') {   // green 1 and 0 on black, like the falling code in the Matrix
+      var GL = { '1': ['.#.', '##.', '.#.', '.#.', '.#.', '.#.', '###'], '0': ['###', '#.#', '#.#', '#.#', '#.#', '#.#', '###'] };
+      var swap = Math.floor(sec * 3) % 2 === 0, gx = [swap ? '1' : '0', swap ? '0' : '1'];
+      disc(x, y, 8, '#06130a');
+      gx.forEach(function (g, gi) {
+        GL[g].forEach(function (row, ry) { for (var rx = 0; rx < 3; rx++) if (row.charAt(rx) === '#') rect(x - 4 + gi * 5 + rx, y - 3 + ry, 1, 1, ry === 0 ? '#c8ffd6' : '#39ff6a'); });
+      });
     } else if (c.kind === 'scarecrow') {
       shape(x, y, [[-1, 1, 2, 7]], '#5b3b1e'); shape(x, y, [[-8, -2, 16, 2], [-4, -6, 8, 4]], '#d9b25a'); rect(x - 4, y - 3, 8, 1, '#a82f24');
     } else if (c.kind === 'sun') {
       for (a = 0; a < 8; a++) rect(x + Math.cos(a * Math.PI / 4) * 7 - 1, y + Math.sin(a * Math.PI / 4) * 7 - 1, 2, 2, '#e08a1e');
       disc(x, y, 4, ART.outline); disc(x, y, 3, '#f2c744');
+    } else if (c.kind === 'magnet') {   // a red horseshoe magnet with silver tips
+      shape(x, y, [[-5, -4, 3, 8], [3, -4, 3, 8], [-5, 3, 11, 3]], '#d9382c');
+      rect(x - 5, y - 4, 3, 3, '#e9e4d2'); rect(x + 3, y - 4, 3, 3, '#e9e4d2');
+    } else if (c.kind === 'umbrella') {   // a Bird Rock blue umbrella
+      shape(x, y, [[-7, -3, 15, 3], [-5, -5, 11, 2], [-2, -7, 5, 2]], THEME.blue);
+      rect(x - 2, y - 3, 1, 3, THEME.blueLight); rect(x + 3, y - 3, 1, 3, THEME.blueDark); rect(x, y - 4, 1, 4, THEME.blueDark);
+      rect(x, y, 1, 7, ART.outline); rect(x - 2, y + 6, 3, 1, ART.outline); rect(x - 2, y + 5, 1, 1, ART.outline);
+    } else if (c.kind === 'net') {   // a rope net
+      shape(x, y, [[-5, -5, 11, 1], [-5, -1, 11, 1], [-5, 3, 11, 1], [-5, -5, 1, 9], [-1, -5, 1, 9], [3, -5, 1, 9]], '#8a5a2b');
+      rect(x - 4, y - 4, 2, 2, CHERRY.red); rect(x, y, 2, 2, CHERRY.red);
+    } else if (c.kind === 'tiny') {   // a very small basket, with two arrows squeezing it in
+      shape(x, y, [[-2, 0, 5, 2]], ART.wickerHi); shape(x, y, [[-1, 2, 3, 3]], ART.wicker);
+      rect(x - 7, y + 1, 3, 1, '#a82f24'); rect(x - 5, y, 1, 3, '#a82f24'); rect(x + 5, y + 1, 3, 1, '#a82f24'); rect(x + 5, y, 1, 3, '#a82f24');
     } else {   // gold: a golden cherry with a sparkle
       rect(x - 1, y - 7, 2, 4, ART.stem); rect(x + 1, y - 7, 4, 2, ART.leaf);
       disc(x, y + 1, 5, ART.outline); disc(x, y + 1, 4, '#f2c744'); rect(x - 3, y - 1, 2, 2, '#ffffff');
@@ -617,6 +660,7 @@
     }
   }
   function drawThing(c) {
+    if (c.rest !== undefined && c.rest < 2 && Math.floor(sec * 8) % 2 === 0) return;   // a red on the ground blinks before it goes
     if (c.kind === 'cherry') drawCherry(c);
     else if (c.kind === 'rock') drawRock(c);
     else if (c.kind === 'bat') drawBat(c);
@@ -635,32 +679,67 @@
   function drawPowerOverlay() {
     var p = world.power;
     if (!p) return;
-    if (p.kind === 'cup') {
-      rect(0, 0, W, H, 'rgba(110,160,255,0.13)');
-      ctx.globalAlpha = 0.35;
-      world.cherries.forEach(function (c) { rect(c.x, c.y - 22, 1, 10, '#ffffff'); rect(c.x - 4, c.y - 18, 1, 6, '#ffffff'); rect(c.x + 4, c.y - 18, 1, 6, '#ffffff'); });
+    if (p.kind === 'bullet') {   // Bullet Time: a green tint, and little streams of 1s and 0s trailing behind everything that falls
+      rect(0, 0, W, H, 'rgba(30,220,90,0.08)');
+      world.cherries.forEach(function (c) {
+        for (var d = 0; d < 3; d++) {
+          ctx.globalAlpha = 0.65 - d * 0.2;
+          text(String((Math.floor(sec * 9) + c.id + d) % 2), c.x - 2, c.y - 14 - d * 8, 6, '#39ff6a');
+        }
+      });
       ctx.globalAlpha = 1;
+    } else if (p.kind === 'tiny') {
+      rect(0, 0, W, H, 'rgba(190,100,230,0.08)');
+    } else if (p.kind === 'magnet') {   // faint pull lines from each red to the basket, and a magnet hovering above it
+      var mx = Math.round(world.basketX);
+      ctx.globalAlpha = 0.45;
+      world.cherries.forEach(function (c) {
+        if (c.kind !== 'cherry' || c.stage !== 'red' || c.rest !== undefined || c.y < 20) return;
+        for (var d = 1; d <= 3; d++) rect(c.x + (mx - c.x) * d / 4, c.y + (BY - c.y) * d / 4, 2, 2, '#ffffff');
+      });
+      ctx.globalAlpha = 1;
+      var my = BY - 30 + Math.round(Math.sin(sec * 6) * 1.5);
+      shape(mx, my, [[-5, -4, 3, 7], [3, -4, 3, 7], [-5, 2, 11, 3]], '#d9382c');
+      rect(mx - 5, my - 4, 3, 3, '#e9e4d2'); rect(mx + 3, my - 4, 3, 3, '#e9e4d2');
+    } else if (p.kind === 'net') {   // a net of rope along the ground
+      ctx.globalAlpha = 0.6;
+      for (var nx = 0; nx < W; nx += 6) rect(nx, L.GROUND_Y - 6, 1, 14, '#e2ae72');
+      [L.GROUND_Y - 6, L.GROUND_Y, L.GROUND_Y + 6].forEach(function (ny) { rect(0, ny, W, 1, '#e2ae72'); });
+      ctx.globalAlpha = 1;
+    } else if (p.kind === 'umbrella') {   // a Bird Rock blue canopy over the basket
+      var ux = Math.round(world.basketX), cw = Math.max(30, Math.round(drawW) + 10);
+      for (var ur = 0; ur < 8; ur++) {
+        var uh = Math.round(cw / 2 * Math.sqrt(1 - Math.pow(1 - (ur + 1) / 8, 2)));
+        rect(ux - uh - 1, BY - 9 + ur, uh * 2 + 2, 1, ART.outline);
+      }
+      for (var ur2 = 0; ur2 < 8; ur2++) {
+        var uh2 = Math.round(cw / 2 * Math.sqrt(1 - Math.pow(1 - (ur2 + 1) / 8, 2)));
+        for (var ux2 = -uh2; ux2 < uh2; ux2++) rect(ux + ux2, BY - 9 + ur2, 1, 1, ((Math.floor((ux2 + 40) / 5)) % 2) ? THEME.blueDark : THEME.blue);
+      }
+      rect(ux - 1, BY - 11, 2, 2, ART.outline);
     } else if (p.kind === 'sun') {
       rect(0, 0, W, H, 'rgba(255,200,60,0.12)');
       for (var i = 0; i < 7; i++) rect(i * 38 - 20 + Math.sin(sec * 1.5 + i) * 6, 0, 12, 200, 'rgba(255,240,150,0.10)');
     }
     var total = L.POWER_TIME[p.kind], frac = Math.max(0, p.left / total), cx = Math.round(world.basketX);
     if (p.left > 1.5 || Math.floor(sec * 8) % 2 === 0) {            // blinks in the last 1.5 s
-      rect(cx - 24, BY - 11, 48, 5, ART.outline); rect(cx - 23, BY - 10, 46, 3, THEME.ink); rect(cx - 23, BY - 10, Math.round(46 * frac), 3, POWER_COLOR[p.kind]);
+      var by = BY - 11 - (p.kind === 'umbrella' ? 5 : 0);
+      rect(cx - 24, by, 48, 5, ART.outline); rect(cx - 23, by + 1, 46, 3, THEME.ink); rect(cx - 23, by + 1, Math.round(46 * frac), 3, POWER_COLOR[p.kind]);
     }
   }
 
   function drawBasket() {
     var cx = Math.round(world.basketX), sq = bounce > 0 ? Math.sin((bounce / 0.2) * Math.PI) : 0;
-    var top = BY - 2 + Math.round(sq * 2), hgt = 18 - Math.round(sq * 2);
-    rect(cx - 24, top - 1, 48, 6, ART.outline); rect(cx - 23, top, 46, 4, ART.wickerHi);       // rim
+    var bw = Math.max(L.TINY_W, Math.round(drawW)), k = Math.max(0, Math.min(1, (bw - L.TINY_W) / (L.BASKET_W - L.TINY_W)));
+    var top = BY - 2 + Math.round(sq * 2), hgt = Math.round(10 + 8 * k) - Math.round(sq * 2), half = Math.floor(bw / 2) + 2;
+    rect(cx - half, top - 1, half * 2, 6, ART.outline); rect(cx - half + 1, top, half * 2 - 2, 4, ART.wickerHi);   // rim
     for (var row = 0; row < hgt - 4; row++) {                                                  // woven body, narrowing toward the bottom
-      var w = 44 - Math.round(row * 0.6), x0 = cx - Math.floor(w / 2), y = top + 4 + row;
+      var w = Math.max(6, bw - Math.round(row * 0.6 * bw / L.BASKET_W)), x0 = cx - Math.floor(w / 2), y = top + 4 + row;
       rect(x0 - 1, y, w + 2, 1, ART.outline);
-      for (var x = 0; x < w; x += 4) rect(x0 + x, y, 4, 1, (((x >> 2) + (row >> 1)) & 1) ? ART.wicker : ART.wickerShade);
+      for (var x = 0; x < w; x += 4) rect(x0 + x, y, Math.min(4, w - x), 1, (((x >> 2) + (row >> 1)) & 1) ? ART.wicker : ART.wickerShade);
     }
-    rect(cx - 20, top + hgt, 40, 1, ART.outline);
-    if (hurt > 0 && Math.floor(sec * 20) % 2 === 0) rect(cx - 24, top - 1, 48, hgt + 2, 'rgba(224,80,63,0.55)');
+    rect(cx - Math.floor((bw - 4) / 2), top + hgt, bw - 4, 1, ART.outline);
+    if (hurt > 0 && Math.floor(sec * 20) % 2 === 0) rect(cx - half, top - 1, half * 2, hgt + 2, 'rgba(224,80,63,0.55)');
   }
 
   // The bird: a dark body with a cream belly and an orange beak, flapping. `dir` is the way it faces (1 = right).
@@ -689,10 +768,10 @@
     ctx.clearRect(0, 0, W, H);
     ctx.drawImage(bg, 0, 0);
     clouds.forEach(drawCloud);
-    var b = world.bird;
-    // The cue to shoo: a dotted line from the bird to the cherry it has locked onto, and a ring around that cherry.
+    // The cue to shoo: a dotted line from a bird to the cherry it has locked onto, and a ring around that cherry.
     // It shows from lock-on (before the dive) until the dive ends. A shoo only counts while it shows.
-    if (b && (b.state === 'lock' || b.state === 'swoop')) {
+    world.birds.forEach(function (b) {
+    if (b.state === 'lock' || b.state === 'swoop') {
       var tc = world.cherries.filter(function (c) { return c.id === b.target; })[0];
       if (tc) {
         ctx.globalAlpha = b.state === 'lock' ? 0.9 : 0.55;
@@ -702,10 +781,11 @@
         for (var a = 0; a < 12; a++) rect(tc.x + Math.cos(a * Math.PI / 6) * pr - 1, tc.y + Math.sin(a * Math.PI / 6) * pr - 1, 2, 2, THEME.gold);
       }
     }
+    });
     if (world.power && world.power.kind === 'scarecrow') drawScarecrow();
     world.cherries.forEach(drawThing);
     drawBasket();
-    if (b) drawBird(b);
+    world.birds.forEach(drawBird);
     drawPowerOverlay();
     particles.forEach(function (p) { rect(p.x, p.y, 3, 3, p.c); });
     floaters.forEach(function (f) {
@@ -742,7 +822,7 @@
       world.cherries.push(c);
       return c.id;
     },
-    // Puts any other falling thing (rock, bat, leaf, cup, scarecrow, sun, gold) at x, just above the rim by default.
+    // Puts any other falling thing (rock, bat, leaf, bullet, scarecrow, sun, tiny, magnet, umbrella, net, gold) at x, just above the rim by default.
     dropItem: function (kind, x, y) {
       var yy = y === undefined ? 250 : y, vy = 120;
       var c = { id: world.nextId++, kind: kind, stage: null, x: x, y: yy, vy: vy * world.speedScale, arrive: world.t + (BY - yy) / (vy * world.speedMul), spin: 0.5, age: 0 };
@@ -754,9 +834,10 @@
       return {
         state: state, score: world.score, lives: world.lives, combo: world.combo, bestCombo: world.bestCombo, picked: world.picked,
         basketX: world.basketX, targetX: world.targetX, t: world.t, over: world.over, practice: practice,
-        power: world.power ? { kind: world.power.kind, left: world.power.left } : null, speedMul: world.speedMul, maxLives: world.maxLives,
+        power: world.power ? { kind: world.power.kind, left: world.power.left } : null, speedMul: world.speedMul, basketW: world.basketW, maxLives: world.maxLives,
         cherries: world.cherries.map(function (c) { return { kind: c.kind, stage: c.stage, x: Math.round(c.x), y: Math.round(c.y) }; }),
-        bird: world.bird ? { state: world.bird.state, x: Math.round(world.bird.x), y: Math.round(world.bird.y) } : null
+        bird: world.birds[0] ? { state: world.birds[0].state, x: Math.round(world.birds[0].x), y: Math.round(world.birds[0].y) } : null,
+        birds: world.birds.map(function (b) { return { id: b.id, state: b.state, x: Math.round(b.x), y: Math.round(b.y) }; })
       };
     }
   };
