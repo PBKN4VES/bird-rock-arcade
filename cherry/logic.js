@@ -55,6 +55,7 @@
   var BIRD_GRAB_R = 8;         // px: steals when its center is this close to the cherry's
   var STEAL_LINE = BASKET_Y;        // a bird can lock onto and take a cherry at any height, right down to the rim (Roger, 2026-11-23: no maximum depth)
   var BIRD_TOUGH2 = 40, BIRD_TOUGH3 = 80;   // from these seconds on, a bird needs 2 (then 3) shoos before it gives up (Roger, 2026-11-19)
+  var BIRD_PATIENCE = 8;       // a bird whose turn has come but finds no red it can reach waits (hovering) this long before flying off
   var BIRD_REGROUP = 0.6;      // a shooed-but-not-beaten bird flies back up, waits this long, then locks on again
   // Lock-on (Roger, 2026-11-20): the dotted line and ring appear on the target BEFORE the dive, and a shoo only counts from then on.
   // The bird's mere presence is not the trigger; the line is. Shrinks with the ramp like the warning, but never below BIRD_LOCK_CAP.
@@ -352,9 +353,16 @@
   // The bird picks its cherry and hovers: the dotted line and ring show now, and the player can shoo it from now on.
   function beginLock(w, b, ev) {
     var pick = pickTarget(w, b, b.lock, claimedTargets(w, b));
-    if (!pick) { leave(w, b); return; }          // nothing to go for: it just flies away
-    b.state = 'lock'; b.target = pick.cherry.id; b.stateT = 0; b.eta = pick.eta;
+    if (!pick) return false;                     // nothing reachable right now: the caller lets it wait a while
+    b.wait = 0; b.state = 'lock'; b.target = pick.cherry.id; b.stateT = 0; b.eta = pick.eta;
     ev.push({ type: 'lock', bird: b.id, targetId: pick.cherry.id, lock: b.lock, eta: pick.eta });
+    return true;
+  }
+  // Its turn has come: lock on if a red is reachable, else keep hovering and look again next frame; give up only after BIRD_PATIENCE s.
+  function tryLock(w, b, dt, ev) {
+    if (beginLock(w, b, ev)) return;
+    b.wait = (b.wait || 0) + dt;
+    if (b.wait >= BIRD_PATIENCE) leave(w, b);
   }
   function beginSwoop(w, b, ev) {
     b.state = 'swoop'; b.swoopT = 0;
@@ -375,7 +383,7 @@
       b.stateT += dt;
       if (b.stateT >= b.warn) {
         if (scarecrow) { leave(w, b); ev.push({ type: 'scare', left: 0, by: 'scarecrow', x: b.x, y: b.y }); }
-        else if (canLock(w, b)) beginLock(w, b, ev);
+        else if (canLock(w, b)) tryLock(w, b, dt, ev);
       }
     } else if (b.state === 'lock') {           // hovering, line on the target; the dive starts when the lock-on ends
       b.stateT += dt;
@@ -403,7 +411,7 @@
     } else if (b.state === 'regroup') {        // shooed but not beaten: climbs back to the top, then comes again
       b.stateT += dt;
       if (b.y > BIRD_Y) b.y = Math.max(BIRD_Y, b.y - b.speed * dt);
-      if (b.stateT >= BIRD_REGROUP && b.y <= BIRD_Y && canLock(w, b)) beginLock(w, b, ev);
+      if (b.stateT >= BIRD_REGROUP && b.y <= BIRD_Y && canLock(w, b)) tryLock(w, b, dt, ev);
     } else {                                   // leaving
       b.x += b.vx * dt; b.y += b.vy * dt;
       if (b.y < -16 || b.x < -20 || b.x > W + 20) {
@@ -605,7 +613,7 @@
     RED_START: RED_START, RED_CAP: RED_CAP, BIRD_EVERY_START: BIRD_EVERY_START, BIRD_EVERY_CAP: BIRD_EVERY_CAP,
     BIRD_FIRST: BIRD_FIRST, SAME_TIME: SAME_TIME, REACH_FACTOR: REACH_FACTOR, WALL_WINDOW: WALL_WINDOW, WALL_MAX: WALL_MAX,
     BIRD_WARN: BIRD_WARN, BIRD_WARN_CAP: BIRD_WARN_CAP, BIRD_LOCK: BIRD_LOCK, BIRD_LOCK_CAP: BIRD_LOCK_CAP, birdLock: birdLock, BIRD_CROSS: BIRD_CROSS, BIRD_SPEED_CAP: BIRD_SPEED_CAP, BIRD_Y: BIRD_Y, BIRD_SPEED: BIRD_SPEED,
-    BIRD_GRAB_R: BIRD_GRAB_R, STEAL_LINE: STEAL_LINE, BIRD_TOUGH2: BIRD_TOUGH2, BIRD_TOUGH3: BIRD_TOUGH3, BIRD_REGROUP: BIRD_REGROUP, RANKS: RANKS,
+    BIRD_GRAB_R: BIRD_GRAB_R, STEAL_LINE: STEAL_LINE, BIRD_TOUGH2: BIRD_TOUGH2, BIRD_TOUGH3: BIRD_TOUGH3, BIRD_REGROUP: BIRD_REGROUP, BIRD_PATIENCE: BIRD_PATIENCE, RANKS: RANKS,
     birdSpeed: birdSpeed, birdWarn: birdWarn, fallSpeed: fallSpeed, spawnEvery: spawnEvery, redChance: redChance, birdEvery: birdEvery,
     shoosNeeded: shoosNeeded, birdsAllowed: birdsAllowed, BIRD2_FROM: BIRD2_FROM, BIRD3_FROM: BIRD3_FROM, BIRD_STAGGER_MIN: BIRD_STAGGER_MIN, BIRD_STAGGER_MAX: BIRD_STAGGER_MAX, BIRD_GAP: BIRD_GAP, PAIR_CHANCE: PAIR_CHANCE, TRIPLE_CHANCE: TRIPLE_CHANCE, MAGNET_PULL: MAGNET_PULL, NET_REST: NET_REST, makeRng: makeRng, isRed: isRed, isBad: isBad, clampX: clampX,
     newWorld: newWorld, setTarget: setTarget, stepWorld: stepWorld, scareBird: scareBird, birdAt: birdAt,
